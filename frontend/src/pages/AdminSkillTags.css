@@ -1,0 +1,8 @@
+.admin-skill-tags h2 { margin: 0 0 8px; }
+.admin-skill-tags .hint { color: #666; font-size: 13px; margin-bottom: 16px; }
+.admin-skill-tags .error { color: #ff4d4f; margin-bottom: 12px; }
+.admin-skill-tags .add-form { display: flex; gap: 8px; margin-bottom: 16px; }
+.admin-skill-tags .add-form input { padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px; width: 200px; }
+.admin-skill-tags .tag-list { list-style: none; padding: 0; margin: 0; }
+.admin-skill-tags .tag-list li { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+.admin-skill-tags .btn-sm.danger { color: #ff4d4f; padding: 2px 8px; cursor: pointer; }

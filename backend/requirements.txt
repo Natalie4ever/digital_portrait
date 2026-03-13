@@ -1,0 +1,11 @@
+# 先固定 greenlet，使用有 Windows 预编译 wheel 的版本，避免本地编译（需 VS Build Tools）
+greenlet==3.0.3
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+sqlalchemy==2.0.25
+aiosqlite==0.19.0
+pydantic==2.6.1
+pydantic-settings==2.1.0
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.9
+openpyxl==3.1.2

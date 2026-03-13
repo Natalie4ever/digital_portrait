@@ -1,0 +1,6 @@
+.admin-logs h2 { margin: 0 0 16px; }
+.admin-logs .error { color: #ff4d4f; margin-bottom: 12px; }
+.logs-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+.logs-table th, .logs-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+.logs-table th { background: #fafafa; }
+.admin-logs .pagination { margin-top: 16px; display: flex; gap: 12px; align-items: center; }
