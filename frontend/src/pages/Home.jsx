@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const links = [
   { path: '/profile', title: '我的档案', icon: <UserOutlined /> },
+  { path: '/admin/profiles', title: '档案管理', icon: <FileTextOutlined />, roles: ['admin', 'leader'] },
   { path: '/admin/users', title: '用户管理', icon: <TeamOutlined />, admin: true },
   { path: '/admin/logs', title: '操作日志', icon: <FileTextOutlined />, admin: true },
   { path: '/admin/skill-tags', title: '技能标签模板', icon: <TagsOutlined />, admin: true },
@@ -12,7 +13,11 @@ const links = [
 
 export default function Home() {
   const { user } = useAuth();
-  const items = links.filter((item) => !item.admin || user?.role === 'admin');
+  const items = links.filter((item) => {
+    if (item.admin) return user?.role === 'admin';
+    if (item.roles) return item.roles.includes(user?.role);
+    return true;
+  });
 
   return (
     <div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Input, Button, List, message, Modal, Alert, Space } from 'antd';
+import { Card, Input, Button, message, Modal, Alert, Space, Tag } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { listSkillTagTemplates, createSkillTagTemplate, deleteSkillTagTemplate } from '../api';
 
@@ -55,15 +55,35 @@ export default function AdminSkillTags() {
           <Input placeholder="新标签名称" value={newName} onChange={(e) => setNewName(e.target.value)} onPressEnter={add} style={{ width: 200 }} />
           <Button type="primary" icon={<PlusOutlined />} onClick={add}>添加</Button>
         </Space>
-        <List
-          loading={loading}
-          dataSource={list}
-          renderItem={(t) => (
-            <List.Item actions={[<Button type="link" size="small" danger onClick={() => remove(t.id)}>删除</Button>]}>
-              {t.name}
-            </List.Item>
-          )}
-        />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {list.map((t, index) => {
+            const palette = [
+              { backgroundColor: '#e6f7ff', color: '#0050b3', borderColor: '#91d5ff' }, // 浅蓝
+              { backgroundColor: '#f6ffed', color: '#237804', borderColor: '#b7eb8f' }, // 浅绿
+              { backgroundColor: '#fff7e6', color: '#ad4e00', borderColor: '#ffd591' }, // 浅橙
+              { backgroundColor: '#fff0f6', color: '#c41d7f', borderColor: '#ffadd2' }, // 浅粉
+            ];
+            const style = palette[index % palette.length];
+            return (
+              <Tag
+                key={t.id}
+                closable
+                onClose={(e) => {
+                  e.preventDefault();
+                  remove(t.id);
+                }}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: 14,
+                  borderRadius: 16,
+                  ...style,
+                }}
+              >
+                {t.name}
+              </Tag>
+            );
+          })}
+        </div>
       </Card>
     </div>
   );

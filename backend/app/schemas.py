@@ -4,13 +4,23 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+def _validate_ehr_no(v: str) -> str:
+    from app.validators import validate_ehr_no
+    return validate_ehr_no(v)
 
 
 # ----- 认证 -----
 class LoginRequest(BaseModel):
     ehr_no: str
     password: str
+
+    @field_validator("ehr_no")
+    @classmethod
+    def ehr_no_seven_digits(cls, v: str) -> str:
+        return _validate_ehr_no(v)
 
 
 class TokenResponse(BaseModel):
@@ -31,6 +41,11 @@ class UserCreate(BaseModel):
     group_name: str
     role: str = "user"
     initial_password: Optional[str] = None
+
+    @field_validator("ehr_no")
+    @classmethod
+    def ehr_no_seven_digits(cls, v: str) -> str:
+        return _validate_ehr_no(v)
 
 
 class UserUpdate(BaseModel):
@@ -56,6 +71,20 @@ class UserResponse(BaseModel):
 class UserListResponse(BaseModel):
     total: int
     items: list[UserResponse]
+
+
+class ProfileListItem(BaseModel):
+    ehr_no: str
+    name: str
+    group_name: str
+    role: str
+    tags: list[str] = []
+    commute_minutes: Optional[int] = None
+
+
+class ProfileListResponse(BaseModel):
+    total: int
+    items: list[ProfileListItem]
 
 
 # ----- 档案基础信息 -----
@@ -97,10 +126,17 @@ class PoliticalInfoResponse(PoliticalInfoCreate):
 
 # ----- 学历学位 -----
 class EducationInfoCreate(BaseModel):
-    degree: Optional[str] = None
-    education_level: Optional[str] = None
+    education_category: Optional[str] = None
     education_type: Optional[str] = None
+    education_level: Optional[str] = None
+    degree: Optional[str] = None
     school: Optional[str] = None
+    major_name: Optional[str] = None
+    duration_years: Optional[str] = None
+    enrollment_date: Optional[date] = None
+    graduation_date: Optional[date] = None
+    completion_status: Optional[str] = None
+    country: Optional[str] = None
 
 
 class EducationInfoUpdate(EducationInfoCreate):
@@ -119,10 +155,13 @@ class EducationInfoResponse(EducationInfoCreate):
 
 # ----- 家庭关系 -----
 class FamilyInfoCreate(BaseModel):
-    relation: Optional[str] = None
     name: Optional[str] = None
+    gender: Optional[str] = None
+    relation: Optional[str] = None
     birth_date: Optional[date] = None
     work_unit_and_title: Optional[str] = None
+    political_status: Optional[str] = None
+    employment_status: Optional[str] = None
 
 
 class FamilyInfoUpdate(FamilyInfoCreate):
@@ -162,8 +201,10 @@ class ResumeInfoResponse(ResumeInfoCreate):
 
 # ----- 奖惩 -----
 class RewardInfoCreate(BaseModel):
+    reward_type: Optional[str] = None
     reward_time: Optional[date] = None
     reward_name: Optional[str] = None
+    reward_reason: Optional[str] = None
 
 
 class RewardInfoUpdate(RewardInfoCreate):
@@ -224,6 +265,7 @@ class AchievementInfoResponse(AchievementInfoCreate):
 class LanguageInfoCreate(BaseModel):
     language: Optional[str] = None
     proficiency: Optional[str] = None
+    cert_level_or_score: Optional[str] = None
 
 
 class LanguageInfoUpdate(LanguageInfoCreate):
@@ -333,3 +375,8 @@ class OperationLogResponse(BaseModel):
 class AdminResetPasswordRequest(BaseModel):
     ehr_no: str
     new_password: str
+
+    @field_validator("ehr_no")
+    @classmethod
+    def ehr_no_seven_digits(cls, v: str) -> str:
+        return _validate_ehr_no(v)

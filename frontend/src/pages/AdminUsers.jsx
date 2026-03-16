@@ -69,6 +69,22 @@ export default function AdminUsers() {
     } catch (err) { throw err; }
   };
 
+  const handleToggleDisabled = (u) => {
+    const targetDisabled = !u.is_disabled;
+    Modal.confirm({
+      title: targetDisabled ? `确定禁用用户 ${u.ehr_no}？` : `确定启用用户 ${u.ehr_no}？`,
+      onOk: async () => {
+        try {
+          await updateUser(u.ehr_no, { is_disabled: targetDisabled });
+          message.success(targetDisabled ? '已禁用' : '已启用');
+          load();
+        } catch (err) {
+          setError(err.message);
+        }
+      },
+    });
+  };
+
   const handleDelete = (ehr_no) => {
     Modal.confirm({ title: `确定删除用户 ${ehr_no}？（软删除）`, onOk: async () => {
       try {
@@ -93,7 +109,11 @@ export default function AdminUsers() {
       const res = await batchImportUsers(importFile);
       setImportResult(res);
       setImportFile(null);
-      message.success(`导入完成：新增 ${res.created}，跳过 ${res.skipped}`);
+      if (res.errors?.length) {
+        message.warning(`导入完成：新增 ${res.created}，跳过 ${res.skipped}；${res.errors.length} 条格式错误`);
+      } else {
+        message.success(`导入完成：新增 ${res.created}，跳过 ${res.skipped}`);
+      }
       load();
     } catch (err) { setError(err.message); }
   };
@@ -104,6 +124,30 @@ export default function AdminUsers() {
     { title: '组别', dataIndex: 'group_name', key: 'group_name' },
     { title: '角色', dataIndex: 'role', key: 'role', render: (r) => ROLE_MAP[r] },
     { title: '状态', dataIndex: 'is_disabled', key: 'is_disabled', render: (v) => (v ? '已禁用' : '正常') },
+    {
+      title: '状态操作',
+      key: 'status_action',
+      render: (_, u) => {
+        const disabled = u.is_disabled;
+        const style = disabled
+          ? { backgroundColor: '#f6ffed', color: '#237804', border: '1px solid #b7eb8f' } // 启用按钮：浅绿
+          : { backgroundColor: '#fff1f0', color: '#cf1322', border: '1px solid #ffa39e' }; // 禁用按钮：浅红
+        return (
+          <Button
+            size="small"
+            style={{
+              borderRadius: 16,
+              padding: '0 12px',
+              height: 26,
+              ...style,
+            }}
+            onClick={() => handleToggleDisabled(u)}
+          >
+            {disabled ? '启用' : '禁用'}
+          </Button>
+        );
+      },
+    },
     {
       title: '操作',
       key: 'action',
@@ -130,7 +174,7 @@ export default function AdminUsers() {
           </Select>
           <Button onClick={load}>查询</Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setModal({ type: 'create', data: {} })}>新增用户</Button>
-          <Button icon={<UploadOutlined />} onClick={() => setModal({ type: 'import' })}>批量导入</Button>
+          <Button icon={<UploadOutlined />} onClick={() => { setImportResult(null); setModal({ type: 'import' }); }}>批量导入</Button>
         </Space>
         {error && <Alert type="error" message={error} style={{ marginBottom: 16 }} />}
         <Table
@@ -159,9 +203,12 @@ export default function AdminUsers() {
         <ResetPwdModal ehr_no={modal.data.ehr_no} onSave={handleResetPwd} onCancel={() => setModal(null)} />
       )}
       {modal?.type === 'import' && (
-        <Modal title="批量导入" open onOk={handleImport} onCancel={() => setModal(null)} okButtonProps={{ disabled: !importFile }} okText="导入">
-          <p>Excel 需包含列：姓名、ehr号、组别；可选：角色、初始密码。无密码时默认 1234567。</p>
+        <Modal title="批量导入" open onOk={handleImport} onCancel={() => setModal(null)} okButtonProps={{ disabled: !importFile }} okText="导入" width={520}>
+          <p>Excel 需包含列：姓名、ehr号、组别；可选：角色、初始密码。无密码时默认 1234567。EHR 号必须为 7 位数字。</p>
           <input type="file" accept=".xlsx,.xls" onChange={(e) => setImportFile(e.target.files?.[0])} style={{ marginTop: 8 }} />
+          {importResult?.errors?.length > 0 && (
+            <Alert type="warning" message="格式错误" description={importResult.errors.map((err, i) => <div key={i}>{err}</div>)} style={{ marginTop: 12 }} />
+          )}
         </Modal>
       )}
     </div>
@@ -179,7 +226,6 @@ function UserFormModal({ title, initial, ehrReadonly, onSave, onCancel }) {
       group_name: initial.group_name ?? '',
       role: initial.role ?? 'user',
       initial_password: initial.initial_password ?? '',
-      is_disabled: initial.is_disabled ?? false,
     });
   }, [initial, form]);
 
@@ -188,7 +234,7 @@ function UserFormModal({ title, initial, ehrReadonly, onSave, onCancel }) {
       const values = await form.validateFields();
       setLoading(true);
       if (ehrReadonly) {
-        await onSave({ name: values.name.trim(), group_name: values.group_name.trim(), role: values.role, is_disabled: values.is_disabled });
+        await onSave({ name: values.name.trim(), group_name: values.group_name.trim(), role: values.role });
       } else {
         await onSave({ ehr_no: values.ehr_no.trim(), name: values.name.trim(), group_name: values.group_name.trim(), role: values.role, initial_password: values.initial_password || undefined });
       }
@@ -203,8 +249,24 @@ function UserFormModal({ title, initial, ehrReadonly, onSave, onCancel }) {
   return (
     <Modal title={title} open onOk={submit} onCancel={onCancel} confirmLoading={loading} width={400} destroyOnClose>
       <Form form={form} layout="vertical">
-        <Form.Item name="ehr_no" label="EHR 号" rules={[{ required: true }]}>
-          <Input readOnly={ehrReadonly} />
+        <Form.Item
+          name="ehr_no"
+          label="EHR 号"
+          rules={[
+            { required: true, message: '请输入 EHR 号' },
+            ...(!ehrReadonly ? [{ pattern: /^\d{7}$/, message: 'EHR 号必须为 7 位数字' }] : []),
+          ]}
+        >
+          <Input
+            readOnly={ehrReadonly}
+            placeholder={ehrReadonly ? undefined : '7 位数字'}
+            maxLength={ehrReadonly ? undefined : 7}
+            inputMode={ehrReadonly ? undefined : 'numeric'}
+            onChange={ehrReadonly ? undefined : (e) => {
+              const v = e.target.value.replace(/\D/g, '').slice(0, 7);
+              form.setFieldsValue({ ehr_no: v });
+            }}
+          />
         </Form.Item>
         <Form.Item name="name" label="姓名" rules={[{ required: true }]}><Input /></Form.Item>
         <Form.Item name="group_name" label="组别" rules={[{ required: true }]}><Input /></Form.Item>
@@ -212,7 +274,6 @@ function UserFormModal({ title, initial, ehrReadonly, onSave, onCancel }) {
           <Select options={ROLE_OPTIONS} />
         </Form.Item>
         {!ehrReadonly && <Form.Item name="initial_password" label="初始密码（不填则 1234567）"><Input /> </Form.Item>}
-        {ehrReadonly && <Form.Item name="is_disabled" valuePropName="checked" label="禁用"><Checkbox /></Form.Item>}
       </Form>
     </Modal>
   );

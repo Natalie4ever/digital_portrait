@@ -10,6 +10,8 @@ import ChangePassword from './pages/ChangePassword';
 import AdminUsers from './pages/AdminUsers';
 import AdminLogs from './pages/AdminLogs';
 import AdminSkillTags from './pages/AdminSkillTags';
+import AdminProfiles from './pages/AdminProfiles';
+import AdminProfileView from './pages/AdminProfileView';
 
 function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
@@ -35,6 +37,8 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="admin/users" element={<PrivateRoute adminOnly><AdminUsers /></PrivateRoute>} />
+        <Route path="admin/profiles" element={<PrivateRoute><AdminProfiles /></PrivateRoute>} />
+        <Route path="admin/profile-view/:ehr_no" element={<PrivateRoute><AdminProfileView /></PrivateRoute>} />
         <Route path="admin/logs" element={<PrivateRoute adminOnly><AdminLogs /></PrivateRoute>} />
         <Route path="admin/skill-tags" element={<PrivateRoute adminOnly><AdminSkillTags /></PrivateRoute>} />
       </Route>

@@ -20,6 +20,7 @@ from app.schemas import (
 from app.auth import get_current_admin, hash_password
 from app.config import settings
 from app.operation_log import log_operation
+from app.validators import validate_ehr_no
 
 router = APIRouter(prefix="/api/admin/users", tags=["用户管理"])
 
@@ -91,12 +92,20 @@ async def create_user(
     return UserResponse.model_validate(user)
 
 
+def _parse_ehr_path(ehr_no: str) -> str:
+    try:
+        return validate_ehr_no(ehr_no)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
 @router.get("/{ehr_no}", response_model=UserResponse)
 async def get_user(
     ehr_no: str,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_admin),
 ):
+    ehr_no = _parse_ehr_path(ehr_no)
     r = await db.execute(select(User).where(User.ehr_no == ehr_no, User.deleted_at.is_(None)))
     user = r.scalar_one_or_none()
     if not user:
@@ -111,6 +120,7 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_admin),
 ):
+    ehr_no = _parse_ehr_path(ehr_no)
     r = await db.execute(select(User).where(User.ehr_no == ehr_no, User.deleted_at.is_(None)))
     user = r.scalar_one_or_none()
     if not user:
@@ -136,6 +146,7 @@ async def delete_user(
     current_user: User = Depends(get_current_admin),
 ):
     from datetime import datetime
+    ehr_no = _parse_ehr_path(ehr_no)
     r = await db.execute(select(User).where(User.ehr_no == ehr_no, User.deleted_at.is_(None)))
     user = r.scalar_one_or_none()
     if not user:
@@ -209,6 +220,11 @@ async def batch_import(
         pwd = str(row[pwd_col]).strip() if pwd_col >= 0 and pwd_col < len(row) and row[pwd_col] else ""
         if not ehr:
             continue
+        try:
+            ehr = validate_ehr_no(ehr)
+        except ValueError:
+            errors.append(f"第{row_idx}行: EHR号必须为7位数字")
+            continue
         if role not in ("user", "leader", "admin"):
             role = "user"
         r = await db.execute(select(User).where(User.ehr_no == ehr))
@@ -227,4 +243,4 @@ async def batch_import(
         created += 1
     await db.flush()
     await log_operation(db, current_user.id, "batch_import", "users", f"导入: 新增 {created}, 跳过 {skipped}", None)
-    return {"message": "导入完成", "created": created, "skipped": skipped}
+    return {"message": "导入完成", "created": created, "skipped": skipped, "errors": errors}

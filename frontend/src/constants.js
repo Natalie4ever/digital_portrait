@@ -31,34 +31,77 @@ export const MARITAL_OPTIONS = [
   { value: '已婚', label: '已婚' },
   { value: '离异', label: '离异' },
   { value: '丧偶', label: '丧偶' },
+  { value: '其他', label: '其他' },
 ];
 
 export const POLITICAL_OPTIONS = [
   '群众', '共青团员', '中共党员', '民主党派', '其他',
 ].map((n) => ({ value: n, label: n }));
 
+// 教育类别（学历学位用）
+export const EDUCATION_CATEGORY_OPTIONS = [
+  '全日制教育', '在职教育',
+].map((n) => ({ value: n, label: n }));
+
+// 教育类型（学历学位用）
+export const EDUCATION_TYPE_OPTIONS_EDU = [
+  '国民教育', '党校教育', '军队教育',
+].map((n) => ({ value: n, label: n }));
+
+// 学历（每层次含毕业/肄业，中专=中等专科、大专=大学专科已合并）
 export const EDUCATION_LEVEL_OPTIONS = [
-  '高中及以下', '大专', '本科', '硕士', '博士', '其他',
+  '其他', '小学毕业', '小学肄业', '初中毕业', '初中肄业', '高中毕业', '高中肄业',
+  '技工学校毕业', '技工学校肄业', '中等专科毕业', '中等专科肄业', '大学专科毕业', '大学专科肄业',
+  '本科毕业', '本科肄业', '硕士研究生毕业', '硕士研究生肄业', '博士研究生毕业', '博士研究生肄业',
 ].map((n) => ({ value: n, label: n }));
 
+// 学位（学历学位用）
 export const DEGREE_OPTIONS = [
-  '无', '学士', '硕士', '博士', '其他',
+  '其他', '学士', '硕士', '博士', '名誉博士',
 ].map((n) => ({ value: n, label: n }));
 
+// 原教育类别/类型（若其他模块仍用可保留别名）
 export const EDUCATION_TYPE_OPTIONS = [
   '全日制', '自考', '成人教育', '网络教育', '其他',
 ].map((n) => ({ value: n, label: n }));
 
+// 学习完成情况（学历学位用）
+export const COMPLETION_STATUS_OPTIONS = [
+  '毕业', '肄业', '结业', '其他',
+].map((n) => ({ value: n, label: n }));
+
+// 学历授予国家（地区）
+export const COUNTRY_OPTIONS = [
+  '中国', '美国', '英国', '日本', '德国', '法国', '澳大利亚', '加拿大', '其他',
+].map((n) => ({ value: n, label: n }));
+
+// 与本人关系（基础信息等用）
 export const RELATION_OPTIONS = [
   '配偶', '子女', '父亲', '母亲', '兄弟', '姐妹', '其他',
 ].map((n) => ({ value: n, label: n }));
+
+// 亲属与本人关系（配偶、子女及主要社会关系用）
+export const FAMILY_RELATION_OPTIONS = [
+  '父亲', '母亲', '丈夫', '妻子', '儿子', '养子或继子', '女儿', '养女或继女',
+].map((n) => ({ value: n, label: n }));
+
+// 人员状况（配偶、子女及主要社会关系用）
+export const EMPLOYMENT_STATUS_OPTIONS = [
+  '学前', '上学', '在业', '无业', '离退', '已故', '烈士', '不详',
+].map((n) => ({ value: n, label: n }));
+
+// 奖惩类型（奖惩信息用）
+export const REWARD_TYPE_OPTIONS = [
+  { value: '奖励', label: '奖励' },
+  { value: '惩罚', label: '惩罚' },
+];
 
 export const LANGUAGE_OPTIONS = [
   '英语', '日语', '法语', '德语', '俄语', '西班牙语', '其他',
 ].map((n) => ({ value: n, label: n }));
 
 export const PROFICIENCY_OPTIONS = [
-  '熟练', '一般', '初级',
+  '精通', '熟练', '良好', '一般',
 ].map((n) => ({ value: n, label: n }));
 
 export const ROLE_OPTIONS = [

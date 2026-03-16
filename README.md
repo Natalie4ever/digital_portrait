@@ -32,7 +32,15 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 cd backend
 python init_db.py
-# 默认管理员：ehr=admin，密码=1234567
+# 默认管理员：ehr=0000001，密码=1234567
+```
+
+若数据库已存在且创建于「学历学位」或「家庭关系」字段扩展之前，需执行一次迁移以添加新列：
+
+```bash
+cd backend
+python migrate_education_columns.py   # 学历学位新列
+python migrate_family_columns.py      # 配偶、子女及主要社会关系新列
 ```
 
 ### 前端
@@ -53,6 +61,7 @@ npm run dev
 
 ## 数据校验
 
+- **EHR 号**：恰好 7 位数字，允许前导零（登录、用户管理、批量导入等处统一校验）
 - 证件号码：18 位身份证格式及校验码
 - 手机号：1 开头的 11 位
 - 日期：合法日期格式（YYYY-MM-DD 等）

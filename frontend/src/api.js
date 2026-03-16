@@ -28,7 +28,10 @@ async function request(url, options = {}) {
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || err.message || '请求失败');
+    const msg = Array.isArray(err.detail) && err.detail[0]?.msg
+      ? err.detail[0].msg
+      : (err.detail || err.message || '请求失败');
+    throw new Error(msg);
   }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
@@ -62,6 +65,12 @@ export async function getProfileMe() {
 
 export async function getProfileByEhr(ehr_no) {
   return api.get(`/profile/by-ehr/${ehr_no}`);
+}
+
+export async function listProfiles(params) {
+  const query = new URLSearchParams(params || {}).toString();
+  const qs = query ? `?${query}` : '';
+  return api.get(`/profile/admin/list${qs}`);
 }
 
 export async function updateProfileBase(body) {

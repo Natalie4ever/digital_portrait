@@ -79,10 +79,17 @@ class EducationInfo(Base):
     __tablename__ = "education_info"
     id = Column(Integer, primary_key=True, autoincrement=True)
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
-    degree = Column(String(50), nullable=True)
-    education_level = Column(String(50), nullable=True)
-    education_type = Column(String(50), nullable=True)
-    school = Column(String(200), nullable=True)
+    education_category = Column(String(50), nullable=True)  # 教育类别：全日制教育、在职教育
+    education_type = Column(String(50), nullable=True)  # 教育类型：国民教育、党校教育、军队教育
+    education_level = Column(String(50), nullable=True)  # 学历
+    degree = Column(String(50), nullable=True)  # 学位
+    school = Column(String(200), nullable=True)  # 毕业学校
+    major_name = Column(String(200), nullable=True)  # 专业名称
+    duration_years = Column(String(20), nullable=True)  # 学制（年）
+    enrollment_date = Column(Date, nullable=True)  # 入学时间
+    graduation_date = Column(Date, nullable=True)  # 毕业时间
+    completion_status = Column(String(50), nullable=True)  # 学习完成情况
+    country = Column(String(100), nullable=True)  # 学历授予国家（地区）
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     profile = relationship("Profile", back_populates="education")
@@ -92,10 +99,13 @@ class FamilyInfo(Base):
     __tablename__ = "family_info"
     id = Column(Integer, primary_key=True, autoincrement=True)
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
-    relation = Column(String(50), nullable=True)
-    name = Column(String(100), nullable=True)
-    birth_date = Column(Date, nullable=True)
-    work_unit_and_title = Column(String(500), nullable=True)
+    name = Column(String(100), nullable=True)  # 亲属姓名
+    gender = Column(String(10), nullable=True)  # 亲属性别
+    relation = Column(String(50), nullable=True)  # 亲属与本人关系
+    birth_date = Column(Date, nullable=True)  # 亲属出生日期
+    work_unit_and_title = Column(String(500), nullable=True)  # 亲属工作单位及职位
+    political_status = Column(String(50), nullable=True)  # 亲属政治面貌
+    employment_status = Column(String(50), nullable=True)  # 人员状况
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     profile = relationship("Profile", back_populates="family")
@@ -117,8 +127,10 @@ class RewardInfo(Base):
     __tablename__ = "reward_info"
     id = Column(Integer, primary_key=True, autoincrement=True)
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
+    reward_type = Column(String(20), nullable=True)  # 奖励、惩罚
     reward_time = Column(Date, nullable=True)
     reward_name = Column(String(300), nullable=True)
+    reward_reason = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     profile = relationship("Profile", back_populates="reward")
@@ -152,6 +164,7 @@ class LanguageInfo(Base):
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     language = Column(String(50), nullable=True)
     proficiency = Column(String(50), nullable=True)
+    cert_level_or_score = Column(String(200), nullable=True)  # 语言能力证书级别/分数
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     profile = relationship("Profile", back_populates="language")

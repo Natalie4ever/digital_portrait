@@ -1,9 +1,19 @@
-# 身份证号、手机号、日期合法性校验
+# 身份证号、手机号、日期合法性校验、EHR 号
 from __future__ import annotations
 
 from typing import Optional, Union
 import re
 from datetime import datetime, date
+
+
+def validate_ehr_no(value: str) -> str:
+    """EHR 号：恰好 7 位数字，允许前导零。"""
+    if not value or not isinstance(value, str):
+        raise ValueError("EHR 号必须为 7 位数字")
+    v = value.strip()
+    if not re.match(r"^\d{7}$", v):
+        raise ValueError("EHR 号必须为 7 位数字")
+    return v
 
 
 def validate_id_number(value: Optional[str]) -> Optional[str]:

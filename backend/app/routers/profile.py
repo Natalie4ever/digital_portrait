@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, exists
 from sqlalchemy.orm import selectinload
 
 from typing import List, Optional, Union
@@ -55,9 +55,11 @@ from app.schemas import (
     ContactInfoResponse,
     ProfileSkillTagCreate,
     ProfileSkillTagResponse,
+    ProfileListResponse,
+    ProfileListItem,
 )
 from app.auth import get_current_user
-from app.validators import validate_id_number, validate_mobile, validate_phone, validate_date
+from app.validators import validate_id_number, validate_mobile, validate_phone, validate_date, validate_ehr_no
 from app.operation_log import log_operation
 
 router = APIRouter(prefix="/api/profile", tags=["个人档案"])
@@ -105,12 +107,111 @@ async def get_profile_by_ehr(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    try:
+        ehr_no = validate_ehr_no(ehr_no)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     target = await _get_target_user(db, ehr_no)
     if not target:
         raise HTTPException(status_code=404, detail="用户不存在")
     if not _can_access(current_user, target):
         raise HTTPException(status_code=403, detail="无权限查看该用户档案")
     return await _profile_response(db, target)
+
+
+@router.get("/admin/list", response_model=ProfileListResponse)
+async def list_profiles_admin(
+    page: int = 1,
+    page_size: int = 20,
+    ehr_no: Optional[str] = None,
+    name: Optional[str] = None,
+    group_name: Optional[str] = None,
+    role: Optional[str] = None,
+    tag: Optional[str] = None,
+    commute_lt: Optional[int] = None,
+    include_disabled: bool = True,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in ("admin", "leader"):
+        raise HTTPException(status_code=403, detail="无权限访问档案列表")
+    if page < 1 or page_size < 1 or page_size > 100:
+        raise HTTPException(status_code=422, detail="分页参数不合法")
+
+    base_q = select(User).where(User.deleted_at.is_(None))
+    if not include_disabled:
+        base_q = base_q.where(User.is_disabled.is_(False))
+    if ehr_no:
+        base_q = base_q.where(User.ehr_no.contains(ehr_no))
+    if name:
+        base_q = base_q.where(User.name.contains(name))
+    if group_name:
+        base_q = base_q.where(User.group_name == group_name)
+    if role:
+        base_q = base_q.where(User.role == role)
+    if current_user.role == "leader" and current_user.group_name:
+        base_q = base_q.where(User.group_name == current_user.group_name)
+
+    if tag:
+        tag_subq = (
+            select(ProfileSkillTag.id)
+            .join(Profile, ProfileSkillTag.profile_id == Profile.id)
+            .where(
+                ProfileSkillTag.tag_name.contains(tag),
+                Profile.user_id == User.id,
+            )
+        )
+        base_q = base_q.where(exists(tag_subq))
+    if commute_lt is not None:
+        commute_subq = (
+            select(ContactInfo.id)
+            .join(Profile, ContactInfo.profile_id == Profile.id)
+            .where(
+                Profile.user_id == User.id,
+                ContactInfo.commute_minutes.is_not(None),
+                ContactInfo.commute_minutes < commute_lt,
+            )
+        )
+        base_q = base_q.where(exists(commute_subq))
+
+    count_q = select(func.count()).select_from(base_q.subquery())
+    total_res = await db.execute(count_q)
+    total = total_res.scalar_one()
+
+    q = (
+        base_q.options(
+            selectinload(User.profile)
+            .selectinload(Profile.contact),
+            selectinload(User.profile)
+            .selectinload(Profile.skill_tags),
+        )
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .order_by(User.id)
+    )
+    result = await db.execute(q)
+    users = result.scalars().unique().all()
+
+    items: list[ProfileListItem] = []
+    for u in users:
+        profile = u.profile
+        tags: list[str] = []
+        commute_minutes: Optional[int] = None
+        if profile:
+            tags = [t.tag_name for t in profile.skill_tags]
+            if profile.contact:
+                commute_minutes = profile.contact.commute_minutes
+        items.append(
+            ProfileListItem(
+                ehr_no=u.ehr_no,
+                name=u.name,
+                group_name=u.group_name,
+                role=u.role,
+                tags=tags,
+                commute_minutes=commute_minutes,
+            )
+        )
+    return ProfileListResponse(total=total, items=items)
 
 
 async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse:
@@ -220,6 +321,10 @@ async def update_profile_base_by_ehr(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    try:
+        ehr_no = validate_ehr_no(ehr_no)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     target = await _get_target_user(db, ehr_no)
     if not target:
         raise HTTPException(status_code=404, detail="用户不存在")
@@ -492,7 +597,13 @@ async def create_reward_me(
 ):
     profile, _ = await _resolve_profile_id(db, current_user, None)
     reward_time = validate_date(body.reward_time) if body.reward_time else None
-    obj = RewardInfo(profile_id=profile.id, reward_time=reward_time, reward_name=body.reward_name)
+    obj = RewardInfo(
+        profile_id=profile.id,
+        reward_type=body.reward_type,
+        reward_time=reward_time,
+        reward_name=body.reward_name,
+        reward_reason=body.reward_reason,
+    )
     db.add(obj)
     await db.flush()
     return RewardInfoResponse.model_validate(obj)
@@ -644,7 +755,12 @@ async def create_language_me(
     current_user: User = Depends(get_current_user),
 ):
     profile, _ = await _resolve_profile_id(db, current_user, None)
-    obj = LanguageInfo(profile_id=profile.id, language=body.language, proficiency=body.proficiency)
+    obj = LanguageInfo(
+        profile_id=profile.id,
+        language=body.language,
+        proficiency=body.proficiency,
+        cert_level_or_score=body.cert_level_or_score,
+    )
     db.add(obj)
     await db.flush()
     return LanguageInfoResponse.model_validate(obj)

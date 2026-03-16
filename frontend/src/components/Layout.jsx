@@ -36,6 +36,9 @@ export default function Layout() {
   const menuItems = [
     { key: '/', label: <Link to="/">首页</Link> },
     { key: '/profile', label: <Link to="/profile">我的档案</Link> },
+    ...(user.role === 'admin' || user.role === 'leader' ? [
+      { key: '/admin/profiles', label: <Link to="/admin/profiles">档案管理</Link> },
+    ] : []),
     ...(user.role === 'admin' ? [
       { key: '/admin/users', label: <Link to="/admin/users">用户管理</Link> },
       { key: '/admin/logs', label: <Link to="/admin/logs">操作日志</Link> },
