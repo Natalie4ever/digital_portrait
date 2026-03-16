@@ -261,7 +261,7 @@ export default function Profile({ ehrOverride }) {
   const titleName = viewingOthers ? `${profile.name || '员工'} 的档案` : '我的档案';
   const subtitle = viewingOthers
     ? `EHR：${profile.ehr_no || '—'}，组别：${profile.group_name || '—'}，角色：${profile.role || '—'}`
-    : '姓名、EHR 号、组别不可修改。';
+    : '';
 
   return (
     <div>
