@@ -10,10 +10,10 @@ async def init():
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as db:
         from sqlalchemy import select
-        r = await db.execute(select(User).where(User.ehr_no == "admin"))
+        r = await db.execute(select(User).where(User.ehr_no == "0000001"))
         if r.scalar_one_or_none() is None:
             u = User(
-                ehr_no="admin",
+                ehr_no="0000001",
                 name="系统管理员",
                 group_name="管理组",
                 role="admin",
@@ -21,7 +21,7 @@ async def init():
             )
             db.add(u)
             await db.commit()
-            print("已创建默认管理员: ehr=admin, 密码=1234567")
+            print("已创建默认管理员: ehr=0000001, 密码=1234567")
         else:
             print("管理员已存在，跳过")
     await engine.dispose()

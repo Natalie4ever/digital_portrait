@@ -30,8 +30,25 @@ export default function Login() {
     <div style={{ minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f2f5' }}>
       <Card title="员工数字画像系统" style={{ width: 360, flexShrink: 0 }}>
         <Form form={form} onFinish={handleSubmit} layout="vertical" size="large">
-          <Form.Item name="ehr_no" label="EHR 号" rules={[{ required: true, message: '请输入 EHR 号' }]}>
-            <Input prefix={<UserOutlined />} placeholder="请输入 EHR 号" autoComplete="username" />
+          <Form.Item
+            name="ehr_no"
+            label="EHR 号"
+            rules={[
+              { required: true, message: '请输入 EHR 号' },
+              { pattern: /^\d{7}$/, message: 'EHR 号必须为 7 位数字' },
+            ]}
+          >
+            <Input
+              prefix={<UserOutlined />}
+              placeholder="7 位数字"
+              autoComplete="username"
+              maxLength={7}
+              inputMode="numeric"
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, '').slice(0, 7);
+                form.setFieldsValue({ ehr_no: v });
+              }}
+            />
           </Form.Item>
           <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
             <Input.Password prefix={<LockOutlined />} placeholder="请输入密码" autoComplete="current-password" />
