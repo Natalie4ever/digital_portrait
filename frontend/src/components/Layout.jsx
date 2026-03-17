@@ -1,10 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Dropdown, Button, Space } from 'antd';
-import { UserOutlined, KeyOutlined, TeamOutlined, FileTextOutlined, TagsOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Layout as AntLayout, Menu, Dropdown, Button } from 'antd';
+import {
+  UserOutlined,
+  KeyOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  HomeOutlined,
+  IdcardOutlined,
+  SettingOutlined,
+  FileTextOutlined,
+  TeamOutlined,
+  HistoryOutlined,
+  TagsOutlined
+} from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
+import './Layout.css';
 
-const { Header, Content } = AntLayout;
+const { Header, Content, Sider } = AntLayout;
 const IDLE_MS = 60 * 60 * 1000;
 
 export default function Layout() {
@@ -12,7 +25,9 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const lastActivity = useRef(Date.now());
+  const [collapsed, setCollapsed] = useState(false);
 
+  // 闲置超时自动登出
   useEffect(() => {
     const onActivity = () => { lastActivity.current = Date.now(); };
     window.addEventListener('click', onActivity);
@@ -33,45 +48,128 @@ export default function Layout() {
 
   if (!user) return null;
 
-  const menuItems = [
-    { key: '/', label: <Link to="/">首页</Link> },
-    { key: '/profile', label: <Link to="/profile">我的档案</Link> },
+  // 侧边栏菜单项
+  const sidebarItems = [
+    {
+      key: '/',
+      icon: <HomeOutlined />,
+      label: <Link to="/">首页</Link>,
+    },
+    {
+      key: '/profile',
+      icon: <IdcardOutlined />,
+      label: <Link to="/profile">我的档案</Link>,
+    },
     ...(user.role === 'admin' || user.role === 'leader' ? [
-      { key: '/admin/profiles', label: <Link to="/admin/profiles">档案管理</Link> },
-    ] : []),
-    ...(user.role === 'admin' ? [
-      { key: '/admin/users', label: <Link to="/admin/users">用户管理</Link> },
-      { key: '/admin/logs', label: <Link to="/admin/logs">操作日志</Link> },
-      { key: '/admin/skill-tags', label: <Link to="/admin/skill-tags">技能标签</Link> },
+      {
+        key: 'admin',
+        icon: <SettingOutlined />,
+        label: '管理功能',
+        children: [
+          { key: '/admin/profiles', label: <Link to="/admin/profiles">档案管理</Link> },
+          ...(user.role === 'admin' ? [
+            { key: '/admin/users', label: <Link to="/admin/users">用户管理</Link> },
+            { key: '/admin/logs', label: <Link to="/admin/logs">操作日志</Link> },
+            { key: '/admin/skill-tags', label: <Link to="/admin/skill-tags">技能标签</Link> },
+          ] : []),
+        ],
+      },
     ] : []),
   ];
 
+  // 用户下拉菜单
   const userMenu = {
     items: [
-      { key: 'pwd', icon: <KeyOutlined />, label: <Link to="/change-password">修改密码</Link> },
+      {
+        key: 'info',
+        icon: <UserOutlined />,
+        label: (
+          <div className="user-menu-info">
+            <div className="user-menu-name">{user.name}</div>
+            <div className="user-menu-ehr">{user.ehr_no}</div>
+          </div>
+        ),
+        disabled: true,
+      },
       { type: 'divider' },
-      { key: 'logout', icon: <LogoutOutlined />, label: '退出', onClick: () => { logout(); navigate('/login'); } },
+      { key: 'pwd', icon: <KeyOutlined />, label: <Link to="/change-password">修改密码</Link> },
+      { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: () => { logout(); navigate('/login'); } },
     ],
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <Link to="/" style={{ color: '#fff', fontSize: 18, fontWeight: 600 }}>员工数字画像系统</Link>
-          <Menu theme="dark" mode="horizontal" selectedKeys={[location.pathname]} items={menuItems} style={{ flex: 1, minWidth: 0 }} />
+      {/* 侧边栏 */}
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        className="app-sider"
+        trigger={null}
+      >
+        {/* 侧边栏标题 */}
+        <div
+          style={{
+            height: 64,
+            margin: '16px',
+            textAlign: 'center',
+            lineHeight: '32px',
+            fontSize: collapsed ? 14 : 18,
+            fontWeight: 'bold',
+            color: 'var(--color-primary)',
+          }}
+        >
+          {collapsed ? '画像' : '员工数字画像'}
         </div>
-        <Dropdown menu={userMenu} placement="bottomRight">
-          <Button type="text" style={{ color: '#fff' }} icon={<UserOutlined />}>
-            {user.name}（{user.ehr_no}）
-          </Button>
-        </Dropdown>
-      </Header>
-      <Content style={{ padding: 24, background: '#f5f5f5' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+
+        <Menu
+          theme="light"
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={sidebarItems}
+          className="app-menu"
+        />
+      </Sider>
+
+      <AntLayout style={{ marginLeft: collapsed ? 80 : 200, transition: 'margin-left 0.3s' }}>
+        {/* 顶部导航栏 */}
+        <Header
+          style={{
+            padding: 0,
+            background: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
+          }}
+        >
+          <Button
+            type="text"
+            icon={collapsed ? <MenuOutlined /> : <MenuOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+            style={{ fontSize: '16px', width: 64, height: 64 }}
+          />
+
+          <div style={{ paddingRight: 24 }}>
+            <Dropdown menu={userMenu}>
+              <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <UserOutlined style={{ fontSize: 18 }} />
+                <span>{user.name}</span>
+              </div>
+            </Dropdown>
+          </div>
+        </Header>
+
+        {/* 内容区域 */}
+        <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
           <Outlet />
-        </div>
-      </Content>
+        </Content>
+      </AntLayout>
     </AntLayout>
   );
 }

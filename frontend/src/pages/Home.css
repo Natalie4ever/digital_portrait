@@ -1,4 +1,147 @@
-.home-page h2 { margin: 0 0 24px; }
-.home-links { display: flex; flex-direction: column; gap: 12px; }
-.home-links a { color: #1890ff; text-decoration: none; font-size: 16px; }
-.home-links a:hover { text-decoration: underline; }
+/* ==================== 首页 ==================== */
+.home-page {
+  min-height: calc(100vh - 88px);
+}
+
+.home-header {
+  margin-bottom: 40px;
+}
+
+.home-title {
+  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  letter-spacing: -0.5px;
+}
+
+.home-subtitle {
+  margin: 0;
+  font-size: 16px;
+  color: #8c8c8c;
+  font-weight: 400;
+}
+
+.home-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 卡片链接 */
+.home-card-link {
+  display: block;
+  height: 100%;
+  text-decoration: none;
+}
+
+/* 首页卡片 */
+.home-card {
+  height: 100%;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.home-card:hover::before {
+  opacity: 1;
+}
+
+.home-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(208, 90, 110, 0.08);
+}
+
+.home-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  min-height: 160px;
+}
+
+/* 卡片图标 */
+.home-card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  font-size: 28px;
+  transition: all 0.3s ease;
+}
+
+.home-card:hover .home-card-icon {
+  transform: scale(1.05);
+}
+
+/* 卡片标题 */
+.home-card-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.home-card:hover .home-card-title {
+  color: var(--color-primary);
+}
+
+/* 箭头指示 */
+.home-card-arrow {
+  font-size: 16px;
+  color: #8c8c8c;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.3s ease;
+}
+
+.home-card:hover .home-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .home-title {
+    font-size: 24px;
+  }
+
+  .home-subtitle {
+    font-size: 14px;
+  }
+
+  .home-card .ant-card-body {
+    padding: 24px 20px;
+    min-height: 140px;
+  }
+
+  .home-card-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .home-card-title {
+    font-size: 16px;
+  }
+}

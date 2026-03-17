@@ -1,0 +1,197 @@
+/* ==================== 管理页面通用样式 ==================== */
+.admin-page {
+  min-height: calc(100vh - 88px);
+}
+
+.admin-header {
+  margin-bottom: 24px;
+}
+
+.admin-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+}
+
+.admin-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #8c8c8c;
+}
+
+.admin-card {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* 筛选区域 */
+.filter-section {
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.filter-input {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  height: 42px;
+  transition: all 0.3s ease;
+}
+
+.filter-input:focus,
+.filter-input:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(208, 90, 110, 0.06);
+}
+
+.filter-input .ant-input {
+  font-size: 14px;
+}
+
+.filter-select {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  height: 42px;
+  transition: all 0.3s ease;
+}
+
+.filter-select:hover {
+  border-color: #d1d5db;
+}
+
+.filter-select .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.filter-number {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  height: 42px;
+  transition: all 0.3s ease;
+}
+
+.filter-number:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(208, 90, 110, 0.06);
+}
+
+.commute-filter {
+  display: flex;
+  align-items: center;
+  height: 42px;
+}
+
+.filter-label {
+  color: #4a5568;
+  font-size: 14px;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.search-btn {
+  height: 42px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: var(--color-primary);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 8px rgba(208, 90, 110, 0.15);
+  transform: translateY(-1px);
+}
+
+.search-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(208, 90, 110, 0.15);
+}
+
+/* 错误提示 */
+.error-alert {
+  margin-bottom: 16px;
+  border-radius: 4px;
+  border: none;
+}
+
+/* 表格样式 */
+.admin-table {
+  border: none;
+}
+
+.admin-table .ant-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-table .ant-table-thead > tr > th {
+  background: #fafafa;
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 16px 12px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.admin-table .ant-table-tbody > tr > td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e8e8e8;
+  color: #333;
+  font-size: 14px;
+}
+
+.admin-table .ant-table-tbody > tr:hover > td {
+  background: var(--color-primary-light);
+}
+
+.view-btn {
+  color: var(--color-primary);
+  font-weight: 500;
+  padding: 0;
+  height: auto;
+}
+
+.view-btn:hover {
+  color: var(--color-primary-hover);
+}
+
+/* 分页样式 */
+.admin-pagination {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.admin-pagination .ant-pagination-item-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.admin-pagination .ant-pagination-item-active a {
+  color: #FFFFFF;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .admin-title {
+    font-size: 18px;
+  }
+
+  .admin-subtitle {
+    font-size: 13px;
+  }
+
+  .filter-section {
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .admin-card {
+    border-radius: 8px;
+  }
+}

@@ -1,63 +1,226 @@
+/* ==================== 登录页面样式（左右分栏）==================== */
 .login-page {
+  display: flex;
   min-height: 100vh;
+  background-color: #fff;
+}
+
+/* 左侧品牌展示区 */
+.login-left {
+  flex: 1;
+  background-color: var(--color-primary);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7 3.134-7 7 3.134 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7 3.134-7 7 3.134 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+
+.login-left-content {
+  position: relative;
+  z-index: 1;
+  padding: 60px;
+  max-width: 600px;
+}
+
+.login-branding {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.system-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f2f5;
+  font-size: 24px;
 }
-.login-box {
-  width: 360px;
-  padding: 32px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+
+.system-name {
+  margin: 0 0 0 16px !important;
+  color: white !important;
+  font-size: 24px;
+  font-weight: 600;
 }
-.login-box h1 {
-  margin: 0 0 24px;
-  font-size: 20px;
+
+.login-intro {
+  margin-bottom: 60px;
+}
+
+.login-intro h3 {
+  color: white;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+
+.description {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* 右侧表单区 */
+.login-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background-color: var(--color-bg-light);
+}
+
+.login-form-container {
+  width: 100%;
+  max-width: 420px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  padding: 40px;
+}
+
+.form-header {
   text-align: center;
-  color: #1a1a1a;
+  margin-bottom: 24px;
 }
-.login-box .field {
-  margin-bottom: 16px;
+
+.form-header h4 {
+  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
 }
-.login-box label {
-  display: block;
-  margin-bottom: 6px;
+
+.form-hint {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* 表单样式 */
+.login-form .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.login-form .ant-form-item-label > label {
+  font-weight: 500;
   font-size: 14px;
   color: #333;
 }
-.login-box input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+
+.login-form .ant-input-affix-wrapper {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+}
+
+.login-form .ant-input-affix-wrapper:hover,
+.login-form .ant-input-affix-wrapper:focus,
+.login-form .ant-input-affix-wrapper-focused {
+  border-color: var(--color-primary);
+  box-shadow: none;
+}
+
+.login-form .ant-input-affix-wrapper .ant-input {
   font-size: 14px;
-  box-sizing: border-box;
+  color: #333;
 }
-.login-box input:focus {
-  border-color: #1890ff;
-  outline: none;
+
+.login-form .site-form-item-icon {
+  color: #bfbfbf;
+  font-size: 16px;
 }
-.login-box .error {
-  color: #ff4d4f;
-  font-size: 13px;
-  margin-bottom: 12px;
+
+.form-button {
+  margin-top: 24px;
 }
-.login-box button {
-  width: 100%;
-  padding: 10px;
-  background: #1890ff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
+
+.login-form .ant-btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  height: 48px;
+  font-size: 16px;
+  border-radius: 8px;
+  font-weight: 500;
 }
-.login-box button:hover:not(:disabled) {
-  background: #40a9ff;
+
+.login-form .ant-btn-primary:hover,
+.login-form .ant-btn-primary:focus {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
-.login-box button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+
+/* 安全提示 */
+.security-tips {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 16px;
+  color: var(--color-text-secondary);
+}
+
+.security-tips .ant-typography {
+  margin: 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-left, .login-right {
+    flex: none;
+  }
+
+  .login-left {
+    padding: 40px 20px;
+  }
+
+  .login-left-content {
+    padding: 20px;
+  }
+
+  .login-form-container {
+    padding: 30px 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-branding {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .system-name {
+    margin: 12px 0 0 !important;
+  }
+
+  .login-intro {
+    margin-bottom: 40px;
+  }
 }
