@@ -28,7 +28,7 @@ export default function Home() {
       </div>
 
       <Row gutter={[20, 20]} className="home-grid">
-        {items.map((item, index) => (
+        {items.map((item) => (
           <Col key={item.path} xs={24} sm={12} lg={8}>
             <Link to={item.path} className="home-card-link">
               <Card

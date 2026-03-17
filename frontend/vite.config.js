@@ -14,7 +14,7 @@ export default defineConfig({
           proxy.on('proxyReq', (proxyReq, req) => {
             console.log('[Vite 代理]', req.method, req.url, '->', 'http://127.0.0.1:8000' + req.url);
           });
-          proxy.on('error', (err, req, res) => {
+          proxy.on('error', (err, req) => {
             console.error('[Vite 代理 错误]', req.url, err.message);
           });
         },

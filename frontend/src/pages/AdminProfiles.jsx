@@ -141,7 +141,7 @@ export default function AdminProfiles() {
       <Card className="admin-card">
         <div className="filter-section">
           <Row gutter={[12, 12]}>
-            <Col xs={24} sm={12} md={8} lg={4}>
+            <Col xs={24} sm={12} md={8} lg={3}>
               <Input
                 placeholder="EHR 号"
                 value={filters.ehr_no || ''}
@@ -151,7 +151,7 @@ export default function AdminProfiles() {
                 className="filter-input"
               />
             </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
+            <Col xs={24} sm={12} md={8} lg={3}>
               <Input
                 placeholder="姓名"
                 value={filters.name || ''}
@@ -161,7 +161,7 @@ export default function AdminProfiles() {
                 className="filter-input"
               />
             </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
+            <Col xs={24} sm={12} md={8} lg={3}>
               <Input
                 placeholder="组别"
                 value={filters.group_name || ''}
@@ -171,7 +171,7 @@ export default function AdminProfiles() {
                 className="filter-input"
               />
             </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
+            <Col xs={24} sm={12} md={8} lg={3}>
               <Select
                 placeholder="角色"
                 value={filters.role || undefined}

@@ -35,6 +35,66 @@
 }
 
 /* 功能按钮 */
+.action-primary-btn {
+  height: 42px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: var(--color-primary);
+  border: none;
+  transition: all 0.3s ease;
+  color: #fff;
+  white-space: nowrap;
+  width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-primary-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 8px rgba(208, 90, 110, 0.15);
+  transform: translateY(-1px);
+}
+
+.action-primary-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(208, 90, 110, 0.15);
+}
+
+.action-primary-btn.ant-btn-default:not(:disabled),
+.action-primary-btn.ant-btn-default:hover:not(:disabled),
+.action-primary-btn.ant-btn-default:focus:not(:disabled) {
+  color: #fff;
+}
+
+/* 用户管理：筛选区左筛选 + 右侧按钮组 */
+.user-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-actions .ant-space {
+  justify-content: flex-end;
+}
+
+@media (max-width: 991px) {
+  .action-primary-btn {
+    width: 100%;
+  }
+
+  .user-actions {
+    width: 100%;
+  }
+
+  .user-actions .ant-space {
+    width: 100%;
+  }
+
+  .user-actions .ant-space-item {
+    flex: 1;
+  }
+}
+
 .create-btn {
   height: 42px;
   border-radius: 4px;
@@ -65,6 +125,19 @@
   background: var(--color-primary-hover);
   box-shadow: 0 4px 8px rgba(208, 90, 110, 0.15);
   transform: translateY(-1px);
+}
+
+/* 让用户管理页的查询按钮与新增用户同风格（覆盖 AdminProfiles.css 里未设置文字颜色的问题） */
+.search-btn {
+  color: #fff;
+}
+
+/* 角色筛选：避免文本折行导致“显示不全”的观感 */
+.filter-select .ant-select-selection-item,
+.filter-select .ant-select-selection-placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 导入弹窗 */

@@ -97,11 +97,6 @@ export default function Layout() {
     ],
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
       {/* 侧边栏 */}

@@ -55,6 +55,34 @@
   margin-right: 12px;
 }
 
+/* ==================== 子菜单（管理功能）选中/展开样式 ==================== */
+.app-menu .ant-menu-submenu-title {
+  margin: 4px 0;
+  padding: 10px 16px;
+  border-radius: 4px;
+  height: auto;
+  line-height: 1.5;
+  color: #4a5568;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.app-menu .ant-menu-submenu-title:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.app-menu .ant-menu-submenu-selected > .ant-menu-submenu-title,
+.app-menu .ant-menu-submenu-open > .ant-menu-submenu-title {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.app-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon,
+.app-menu .ant-menu-submenu-open > .ant-menu-submenu-title .anticon {
+  color: var(--color-primary);
+}
+
 /* ==================== 顶部导航栏 ==================== */
 .app-header {
   padding: 0;

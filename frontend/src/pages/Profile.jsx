@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Spin,
@@ -121,7 +121,7 @@ export default function Profile({ ehrOverride }) {
       .catch(() => setRegionOptions([]));
   }, []);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const profilePromise = ehrParam ? getProfileByEhr(ehrParam) : getProfileMe();
@@ -135,20 +135,19 @@ export default function Profile({ ehrOverride }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [ehrParam]);
 
-  useEffect(() => { load(); }, [ehrParam]);
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     if (!baseEdit || !profile?.base) return;
     const b = profile.base;
-    const { native_place, birth_place, household_place, ...rest } = b;
     const placeValue = (str) => (regionOptions.length ? findPathByConcatenatedName(regionOptions, str) ?? undefined : undefined);
     baseForm.setFieldsValue({
       name: profile.name,
       ehr_no: profile.ehr_no,
       group_name: profile.group_name,
-      ...rest,
+      ...b,
       birth_date: b.birth_date ? dayjs(b.birth_date) : null,
       work_start_date: b.work_start_date ? dayjs(b.work_start_date) : null,
       hire_date: b.hire_date ? dayjs(b.hire_date) : null,
@@ -156,12 +155,12 @@ export default function Profile({ ehrOverride }) {
       birth_place: placeValue(b.birth_place),
       household_place: placeValue(b.household_place),
     });
-  }, [baseEdit, profile, regionOptions]);
+  }, [baseEdit, profile, regionOptions, baseForm]);
 
   const saveBase = async () => {
     try {
       const values = await baseForm.validateFields();
-      const { name, ehr_no, group_name, ...rest } = values;
+      const { ...rest } = values;
       const body = {
         ...rest,
         birth_date: values.birth_date?.format?.('YYYY-MM-DD'),
@@ -237,7 +236,7 @@ export default function Profile({ ehrOverride }) {
 
   useEffect(() => {
     if (contactEdit && profile?.contact) contactForm.setFieldsValue(profile.contact);
-  }, [contactEdit, profile]);
+  }, [contactEdit, profile, contactForm]);
 
   const addTag = async (tagName, templateId) => {
     try {

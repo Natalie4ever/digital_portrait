@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -55,7 +55,7 @@ export default function AdminUsers() {
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await listUsers({ page, page_size: pageSize, ...filters });
@@ -66,26 +66,22 @@ export default function AdminUsers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, filters]);
 
-  useEffect(() => { load(); }, [page, filters]);
+  useEffect(() => { load(); }, [load]);
 
   const handleCreate = async (body) => {
-    try {
-      await createUser(body);
-      message.success('已创建');
-      setModal(null);
-      load();
-    } catch (err) { throw err; }
+    await createUser(body);
+    message.success('已创建');
+    setModal(null);
+    load();
   };
 
   const handleUpdate = async (ehr_no, body) => {
-    try {
-      await updateUser(ehr_no, body);
-      message.success('已更新');
-      setModal(null);
-      load();
-    } catch (err) { throw err; }
+    await updateUser(ehr_no, body);
+    message.success('已更新');
+    setModal(null);
+    load();
   };
 
   const handleToggleDisabled = (u) => {
@@ -115,11 +111,9 @@ export default function AdminUsers() {
   };
 
   const handleResetPwd = async (ehr_no, new_password) => {
-    try {
-      await resetPassword(ehr_no, new_password);
-      message.success('密码已重置');
-      setModal(null);
-    } catch (err) { throw err; }
+    await resetPassword(ehr_no, new_password);
+    message.success('密码已重置');
+    setModal(null);
   };
 
   const handleImport = async () => {
@@ -223,61 +217,79 @@ export default function AdminUsers() {
 
       <Card className="admin-card">
         <div className="filter-section">
-          <Row gutter={[12, 12]}>
-            <Col xs={24} sm={12} md={6} lg={4}>
-              <Checkbox
-                checked={filters.include_disabled}
-                onChange={(e) => setFilters({ ...filters, include_disabled: e.target.checked })}
-                className="filter-checkbox"
-              >
-                含已禁用
-              </Checkbox>
+          <Row gutter={[12, 12]} align="middle" justify="space-between" className="user-filters-row">
+            <Col xs={24} lg flex="auto">
+              <Row gutter={[12, 12]} align="middle" className="user-filters-left">
+                <Col xs={24} sm={12} md={6} lg={4}>
+                  <Checkbox
+                    checked={filters.include_disabled}
+                    onChange={(e) => setFilters({ ...filters, include_disabled: e.target.checked })}
+                    className="filter-checkbox"
+                  >
+                    含已禁用
+                  </Checkbox>
+                </Col>
+                <Col xs={24} sm={12} md={6} lg={6}>
+                  <Input
+                    placeholder="EHR 号"
+                    value={filters.ehr_no || ''}
+                    onChange={(e) => setFilters({ ...filters, ehr_no: e.target.value || undefined })}
+                    prefix={<SearchOutlined />}
+                    allowClear
+                    className="filter-input"
+                  />
+                </Col>
+                <Col xs={24} sm={12} md={6} lg={6}>
+                  <Input
+                    placeholder="姓名"
+                    value={filters.name || ''}
+                    onChange={(e) => setFilters({ ...filters, name: e.target.value || undefined })}
+                    prefix={<SearchOutlined />}
+                    allowClear
+                    className="filter-input"
+                  />
+                </Col>
+                <Col xs={24} sm={12} md={6} lg={6}>
+                  <Select
+                    placeholder="角色"
+                    value={filters.role || undefined}
+                    onChange={(v) => setFilters({ ...filters, role: v })}
+                    allowClear
+                    className="filter-select"
+                  >
+                    {ROLE_OPTIONS.map((o) => <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>)}
+                  </Select>
+                </Col>
+              </Row>
             </Col>
-            <Col xs={24} sm={12} md={6} lg={4}>
-              <Input
-                placeholder="EHR 号"
-                value={filters.ehr_no || ''}
-                onChange={(e) => setFilters({ ...filters, ehr_no: e.target.value || undefined })}
-                prefix={<SearchOutlined />}
-                allowClear
-                className="filter-input"
-              />
-            </Col>
-            <Col xs={24} sm={12} md={6} lg={4}>
-              <Input
-                placeholder="姓名"
-                value={filters.name || ''}
-                onChange={(e) => setFilters({ ...filters, name: e.target.value || undefined })}
-                prefix={<SearchOutlined />}
-                allowClear
-                className="filter-input"
-              />
-            </Col>
-            <Col xs={24} sm={12} md={6} lg={4}>
-              <Select
-                placeholder="角色"
-                value={filters.role || undefined}
-                onChange={(v) => setFilters({ ...filters, role: v })}
-                allowClear
-                className="filter-select"
-              >
-                {ROLE_OPTIONS.map((o) => <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>)}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Button onClick={load} block icon={<SearchOutlined />} className="search-btn">
-                查询
-              </Button>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setModal({ type: 'create', data: {} })} block className="create-btn">
-                新增用户
-              </Button>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Button icon={<UploadOutlined />} onClick={() => { setImportResult(null); setModal({ type: 'import' }); }} block className="import-btn">
-                批量导入
-              </Button>
+
+            <Col xs={24} lg flex="none">
+              <div className="user-actions">
+                <Space wrap>
+                  <Button
+                    icon={<UploadOutlined />}
+                    onClick={() => { setImportResult(null); setModal({ type: 'import' }); }}
+                    className="action-primary-btn"
+                  >
+                    批量导入
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setModal({ type: 'create', data: {} })}
+                    className="action-primary-btn"
+                  >
+                    新增用户
+                  </Button>
+                  <Button
+                    onClick={load}
+                    icon={<SearchOutlined />}
+                    className="action-primary-btn"
+                  >
+                    查询
+                  </Button>
+                </Space>
+              </div>
             </Col>
           </Row>
         </div>

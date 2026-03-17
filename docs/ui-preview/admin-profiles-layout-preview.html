@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>档案管理布局对比预览</title>
+    <style>
+      :root{
+        --primary:#D05A6E;
+        --primary-light:#F6E7EA;
+        --text:#1f2937;
+        --muted:#6b7280;
+        --border:#e5e7eb;
+        --bg:#f5f5f5;
+      }
+      *{box-sizing:border-box}
+      body{
+        margin:0;
+        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+        background:var(--bg);
+        color:var(--text);
+      }
+      header{
+        padding:18px 22px;
+        background:#fff;
+        border-bottom:1px solid var(--border);
+        display:flex;
+        gap:12px;
+        align-items:baseline;
+      }
+      header h1{font-size:16px;margin:0}
+      header p{margin:0;color:var(--muted);font-size:13px}
+      .wrap{padding:18px 22px}
+      .grid{
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:16px;
+      }
+      .panel{
+        background:#fff;
+        border:1px solid var(--border);
+        border-radius:10px;
+        overflow:hidden;
+      }
+      .panel-head{
+        padding:12px 14px;
+        border-bottom:1px solid var(--border);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+      }
+      .badge{
+        font-size:12px;
+        color:#fff;
+        padding:4px 10px;
+        border-radius:999px;
+        background: #111827;
+      }
+      .badge.ok{background:var(--primary)}
+      .panel-body{padding:14px}
+      .label{font-size:12px;color:var(--muted);margin-bottom:10px}
+      .filters{
+        display:grid;
+        grid-template-columns: repeat(24, 1fr);
+        gap:10px;
+        align-items:center;
+      }
+      .ctrl{
+        height:42px;
+        border:1px solid var(--border);
+        border-radius:10px;
+        background:#fff;
+        display:flex;
+        align-items:center;
+        gap:8px;
+        padding:0 12px;
+        min-width:0;
+      }
+      .ctrl .ph{color:#9ca3af;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .icon{width:14px;height:14px;border-radius:3px;background:#d1d5db}
+      .btn{
+        height:42px;
+        border-radius:8px;
+        border:1px solid var(--border);
+        background:#f3f4f6;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+        font-weight:600;
+        color:#374151;
+        user-select:none;
+      }
+      .btn.primary{
+        background:var(--primary);
+        border-color:var(--primary);
+        color:#fff;
+      }
+      .commute{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        min-width:0;
+      }
+      .commute .t{white-space:nowrap;color:#4b5563;font-size:13px}
+      .num{
+        flex:1;
+        height:42px;
+        border:1px solid var(--border);
+        border-radius:10px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#9ca3af;
+        font-size:13px;
+        min-width:96px;
+      }
+      .side{
+        margin-top:14px;
+        display:grid;
+        grid-template-columns: 220px 1fr;
+        gap:12px;
+      }
+      .menu{
+        border:1px solid var(--border);
+        border-radius:10px;
+        overflow:hidden;
+      }
+      .menu .item{
+        padding:10px 12px;
+        border-bottom:1px solid #f1f5f9;
+        color:#4b5563;
+        font-weight:600;
+        font-size:13px;
+      }
+      .menu .item:last-child{border-bottom:none}
+      .menu .group{
+        background:#fff;
+      }
+      .menu .group.active{
+        background:var(--primary-light);
+        color:var(--primary);
+      }
+      .menu .child.active{
+        background:var(--primary);
+        color:#fff;
+      }
+      .hint{
+        margin-top:12px;
+        border:1px dashed #d1d5db;
+        border-radius:10px;
+        padding:10px 12px;
+        background:#fafafa;
+        color:#374151;
+        font-size:13px;
+        line-height:1.6;
+      }
+      .k{display:inline-block;padding:2px 8px;border-radius:999px;background:#111827;color:#fff;font-size:12px;margin-right:6px}
+      .k.p{background:var(--primary)}
+      @media (max-width: 980px){
+        .grid{grid-template-columns:1fr}
+        .side{grid-template-columns:1fr}
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>档案管理筛选区 & 菜单高亮对比</h1>
+      <p>用于直观看到你反馈的 3 个问题的修复效果（静态预览）</p>
+    </header>
+
+    <div class="wrap">
+      <div class="grid">
+        <!-- BEFORE -->
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div style="font-weight:700">改前（问题状态）</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">角色下拉被挤窄、分钟不居中、管理功能标题偏蓝</div>
+            </div>
+            <span class="badge">BEFORE</span>
+          </div>
+          <div class="panel-body">
+            <div class="label">筛选区（栅格总数超 24 → 控件挤压换行/变窄）</div>
+            <div class="filters">
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">EHR 号</span></div>
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">姓名</span></div>
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">组别</span></div>
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">角色（展示不全）</span></div>
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">标签包含</span></div>
+              <div class="ctrl" style="grid-column: span 4">
+                <div class="commute" style="width:100%">
+                  <span class="t">通勤时间 &lt;</span>
+                  <div class="num" style="justify-content:flex-start;padding-left:12px">分钟</div>
+                </div>
+              </div>
+              <div class="btn primary" style="grid-column: span 4;justify-content:flex-start;padding-left:18px">
+                <span class="icon" style="background:#fff;opacity:.6"></span>查询
+              </div>
+            </div>
+
+            <div class="label" style="margin-top:14px">左侧菜单（管理功能标题高亮为默认蓝，比较突兀）</div>
+            <div class="side">
+              <div class="menu">
+                <div class="item">首页</div>
+                <div class="item">我的档案</div>
+                <div class="item group active" style="color:#1677ff;background:#e6f4ff">管理功能（偏蓝）</div>
+                <div class="item child active">档案管理</div>
+                <div class="item child">用户管理</div>
+              </div>
+              <div class="hint">
+                <span class="k">1</span>“角色”下拉过窄，文字被截断<br/>
+                <span class="k">2</span>“分钟”在输入框里不居中，看起来歪<br/>
+                <span class="k">3</span>“管理功能”标题高亮成蓝色，与全站主题色不一致
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AFTER -->
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div style="font-weight:700">改后（目标效果）</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">角色更宽、分钟居中、管理功能标题用主题色</div>
+            </div>
+            <span class="badge ok">AFTER</span>
+          </div>
+          <div class="panel-body">
+            <div class="label">筛选区（lg 栅格总数 = 24，给“角色”更宽；“分钟”输入居中）</div>
+            <div class="filters">
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">EHR 号</span></div>
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">姓名</span></div>
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">组别</span></div>
+              <div class="ctrl" style="grid-column: span 5"><span class="icon"></span><span class="ph">角色（展示完整/更宽）</span></div>
+              <div class="ctrl" style="grid-column: span 4"><span class="icon"></span><span class="ph">标签包含</span></div>
+              <div class="ctrl" style="grid-column: span 3">
+                <div class="commute" style="width:100%">
+                  <span class="t">通勤时间 &lt;</span>
+                  <div class="num">分钟</div>
+                </div>
+              </div>
+              <div class="btn primary" style="grid-column: span 4"><span class="icon" style="background:#fff;opacity:.6"></span>查询</div>
+            </div>
+
+            <div class="label" style="margin-top:14px">左侧菜单（管理功能标题选中/展开 → 主题色 + 浅主题底）</div>
+            <div class="side">
+              <div class="menu">
+                <div class="item">首页</div>
+                <div class="item">我的档案</div>
+                <div class="item group active">管理功能（主题色）</div>
+                <div class="item child active">档案管理</div>
+                <div class="item child">用户管理</div>
+              </div>
+              <div class="hint">
+                <span class="k p">1</span>“角色”列在 `lg` 断点加宽（不再被挤成小方块）<br/>
+                <span class="k p">2</span>`InputNumber` 文本居中，视觉更稳<br/>
+                <span class="k p">3</span>子菜单标题（管理功能）选中/展开统一为主题色，不再突兀
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
