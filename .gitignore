@@ -86,3 +86,6 @@ Thumbs.db
 .claude/settings.local.json
 TZfrontend
 TZfrontend.backup
+.cursor
+.cursor/rules
+

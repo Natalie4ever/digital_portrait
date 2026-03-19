@@ -618,7 +618,7 @@ function PoliticalSection({ list, editing, setEditing, adding, setAdding, saveSu
         tableLayout="fixed"
         style={{ marginBottom: 16, width: '100%' }}
       />
-      {!readOnly && !edit && !isAdding && <Button block onClick={openAdd} style={{ color: '#1890ff', borderColor: '#1890ff' }}>新增</Button>}
+      {!readOnly && !edit && !isAdding && <Button block onClick={openAdd} style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>新增</Button>}
       {!readOnly && (
       <Modal
         title={isAdding ? '新增政治面貌' : '编辑政治面貌'}
@@ -706,7 +706,7 @@ function TableSubSection({ title, segment, list, fields, tableFields, formColumn
         tableLayout="fixed"
         style={{ marginBottom: 16, width: '100%' }}
       />
-      {!readOnly && !edit && !isAdding && <Button block onClick={openAdd} style={{ color: '#1890ff', borderColor: '#1890ff' }}>新增</Button>}
+      {!readOnly && !edit && !isAdding && <Button block onClick={openAdd} style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>新增</Button>}
       {!readOnly && (
         <Modal
           title={isAdding ? `新增${title}` : `编辑${title}`}
