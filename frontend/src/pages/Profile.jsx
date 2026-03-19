@@ -140,14 +140,14 @@ export default function Profile({ ehrOverride }) {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    if (!baseEdit || !profile?.base) return;
-    const b = profile.base;
+    if (!baseEdit || !profile) return;
+    const b = profile.base || {};
     const placeValue = (str) => (regionOptions.length ? findPathByConcatenatedName(regionOptions, str) ?? undefined : undefined);
     baseForm.setFieldsValue({
+      ...b,
       name: profile.name,
       ehr_no: profile.ehr_no,
       group_name: profile.group_name,
-      ...b,
       birth_date: b.birth_date ? dayjs(b.birth_date) : null,
       work_start_date: b.work_start_date ? dayjs(b.work_start_date) : null,
       hire_date: b.hire_date ? dayjs(b.hire_date) : null,
