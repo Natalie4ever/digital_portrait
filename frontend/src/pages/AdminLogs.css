@@ -1,2 +1,23 @@
 /* ==================== 操作日志页面样式 ==================== */
 @import './AdminProfiles.css';
+
+/* 仅操作日志页：允许横向滚动且支持拖拽滚动 */
+.admin-logs-drag-scroll {
+  width: 100%;
+  cursor: grab;
+  user-select: none;
+}
+
+.admin-logs-drag-scroll.is-dragging {
+  cursor: grabbing;
+}
+
+/* 解除通用样式里对 .ant-table 的裁剪，避免横向滚动条被隐藏 */
+.admin-logs-table .ant-table {
+  overflow: visible !important;
+}
+
+/* 给横向滚动容器留出空间，滚动条更容易被看到 */
+.admin-logs-table .ant-table-content {
+  padding-bottom: 6px;
+}
