@@ -1,21 +1,342 @@
-.admin-users h2 { margin: 0 0 16px; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center; }
-.toolbar input[type="text"], .toolbar select { padding: 6px 10px; border: 1px solid #d9d9d9; border-radius: 4px; }
-.toolbar button { padding: 6px 14px; cursor: pointer; border-radius: 4px; }
-.import-result { margin-bottom: 12px; color: #52c41a; }
-.admin-users .error { color: #ff4d4f; margin-bottom: 12px; }
-.user-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.user-table th, .user-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
-.user-table th { background: #fafafa; font-weight: 600; }
-.user-table .btn-sm { margin-right: 8px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
-.user-table .btn-sm.danger { color: #ff4d4f; }
-.pagination { margin-top: 16px; display: flex; align-items: center; gap: 12px; }
-.pagination button:disabled { opacity: 0.6; cursor: not-allowed; }
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #fff; padding: 24px; border-radius: 8px; min-width: 360px; }
-.modal-content h3 { margin: 0 0 16px; }
-.modal-content .field { margin-bottom: 12px; }
-.modal-content .field label { display: block; margin-bottom: 4px; font-size: 14px; }
-.modal-content .field input, .modal-content .field select { width: 100%; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px; box-sizing: border-box; }
-.modal-actions { margin-top: 20px; display: flex; gap: 12px; }
-.modal-actions button { padding: 8px 16px; cursor: pointer; border-radius: 4px; }
+/* ==================== 用户管理页面样式 ==================== */
+@import './AdminProfiles.css';
+
+/* 状态按钮 */
+.status-btn {
+  border-radius: 4px;
+  padding: 4px 12px;
+  height: 28px;
+  font-weight: 500;
+  font-size: 12px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.status-btn.enable {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #86efac;
+}
+
+.status-btn.enable:hover {
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+
+.status-btn.disable {
+  background: #f3f4f6;
+  color: #4b5563;
+  border-color: #9ca3af;
+}
+
+.status-btn.disable:hover {
+  background: #e5e7eb;
+  border-color: #6b7280;
+}
+
+/* 功能按钮 */
+.action-primary-btn {
+  height: 42px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: var(--color-primary);
+  border: none;
+  transition: all 0.3s ease;
+  color: #fff;
+  white-space: nowrap;
+  width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-primary-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  background-color: var(--color-primary-hover);
+  /* Antd 可能在 hover 使用 background（含渐变/波纹）覆盖，这里强制跟随主题色 */
+  background-image: none !important;
+  box-shadow: 0 4px 8px rgba(208, 90, 110, 0.15);
+  transform: translateY(-1px);
+}
+
+.action-primary-btn.ant-btn-primary:hover:not(:disabled),
+.action-primary-btn.ant-btn-primary:focus:not(:disabled) {
+  background: var(--color-primary-hover) !important;
+  background-color: var(--color-primary-hover) !important;
+  background-image: none !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+.action-primary-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(208, 90, 110, 0.15);
+}
+
+.action-primary-btn.ant-btn-default:not(:disabled),
+.action-primary-btn.ant-btn-default:hover:not(:disabled),
+.action-primary-btn.ant-btn-default:focus:not(:disabled) {
+  color: #fff;
+}
+
+/* 用户管理：筛选区左筛选 + 右侧按钮组 */
+.user-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-actions .ant-space {
+  justify-content: flex-end;
+}
+
+/* 用户管理：查询按钮区域（查询行右侧） */
+.user-search-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-left: 8px;
+}
+
+/* 用户管理：操作按钮行（第 1 行右对齐） */
+.user-actions-top {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 桌面端：查询行更紧凑，控件占满整行且不换行 */
+@media (min-width: 992px) {
+  .user-filter-search-row {
+    flex-wrap: nowrap;
+  }
+
+  .user-filter-search-row > .ant-col {
+    min-width: 0;
+  }
+
+  .user-filters-left {
+    flex-wrap: nowrap;
+    width: 100%;
+  }
+}
+
+/* 灰色系操作按钮（批量导入 / 新增用户） */
+.action-secondary-btn {
+  height: 42px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+  transition: all 0.2s ease;
+}
+
+.action-secondary-btn:hover:not(:disabled),
+.action-secondary-btn:focus:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.action-secondary-btn:active:not(:disabled) {
+  background: #e5e7eb;
+  transform: translateY(0);
+}
+
+/* 操作列：禁用/启用（橙色，link 风格与“编辑”一致） */
+.action-warn-link.ant-btn-link {
+  color: #d97706;
+}
+
+.action-warn-link.ant-btn-link:hover,
+.action-warn-link.ant-btn-link:focus {
+  color: #b45309;
+}
+
+@media (max-width: 991px) {
+  .action-primary-btn {
+    width: 100%;
+  }
+
+  .user-actions {
+    width: 100%;
+  }
+
+  .user-actions .ant-space {
+    width: 100%;
+  }
+
+  .user-actions .ant-space-item {
+    flex: 1;
+  }
+
+  .user-actions-top {
+    justify-content: flex-start;
+  }
+
+  .user-actions-top .ant-space {
+    width: 100%;
+  }
+
+  .user-actions-top .ant-space-item {
+    flex: 1;
+  }
+
+  .action-secondary-btn {
+    width: 100%;
+  }
+}
+
+.create-btn {
+  height: 42px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: var(--color-primary);
+  border: none;
+  transition: all 0.3s ease;
+  color: #fff;
+}
+
+.create-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 8px rgba(208, 90, 110, 0.15);
+  transform: translateY(-1px);
+}
+
+.import-btn {
+  height: 42px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: var(--color-primary);
+  border: none;
+  transition: all 0.3s ease;
+  color: #fff;
+}
+
+.import-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 8px rgba(208, 90, 110, 0.15);
+  transform: translateY(-1px);
+}
+
+/* 让用户管理页的查询按钮与新增用户同风格（覆盖 AdminProfiles.css 里未设置文字颜色的问题） */
+.search-btn {
+  color: #fff;
+}
+
+/* 角色筛选：避免文本折行导致“显示不全”的观感 */
+.filter-select .ant-select-selection-item,
+.filter-select .ant-select-selection-placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 导入弹窗 */
+.import-modal .ant-modal-body {
+  padding: 24px;
+}
+
+.import-hint {
+  font-size: 14px;
+  color: #4a5568;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.import-hint strong {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.import-file-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.import-file-input:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.import-file-input svg {
+  font-size: 24px;
+  color: var(--color-primary);
+}
+
+.import-file-input input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+}
+
+.import-file-input input::file-selector-button {
+  display: none;
+}
+
+.file-name {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.import-error {
+  margin-top: 16px;
+  border-radius: 4px;
+  border: none;
+}
+
+/* 表单弹窗通用样式 */
+.user-form-modal .ant-modal-body,
+.reset-pwd-modal .ant-modal-body {
+  padding: 24px;
+}
+
+.modal-input {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  height: 42px;
+  transition: all 0.3s ease;
+}
+
+.modal-input:focus,
+.modal-input:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(208, 90, 110, 0.06);
+}
+
+.modal-select {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  height: 42px;
+  transition: all 0.3s ease;
+}
+
+.modal-select:hover {
+  border-color: #d1d5db;
+}
+
+.modal-select .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .filter-section {
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .admin-card {
+    border-radius: 8px;
+  }
+}

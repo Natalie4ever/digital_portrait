@@ -1,8 +1,130 @@
-.admin-skill-tags h2 { margin: 0 0 8px; }
-.admin-skill-tags .hint { color: #666; font-size: 13px; margin-bottom: 16px; }
-.admin-skill-tags .error { color: #ff4d4f; margin-bottom: 12px; }
-.admin-skill-tags .add-form { display: flex; gap: 8px; margin-bottom: 16px; }
-.admin-skill-tags .add-form input { padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px; width: 200px; }
-.admin-skill-tags .tag-list { list-style: none; padding: 0; margin: 0; }
-.admin-skill-tags .tag-list li { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-.admin-skill-tags .btn-sm.danger { color: #ff4d4f; padding: 2px 8px; cursor: pointer; }
+/* ==================== 技能标签页面样式 ==================== */
+@import './AdminProfiles.css';
+
+.skill-tags-card {
+  min-height: 400px;
+}
+
+/* 卡片头部信息 */
+.card-header {
+  margin-bottom: 24px;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--color-primary-light);
+  border-radius: 8px;
+  border: 1px solid var(--color-primary);
+}
+
+.header-icon {
+  font-size: 32px;
+  color: var(--color-primary);
+}
+
+.header-info .header-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-info .header-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #8c8c8c;
+}
+
+/* 添加区域 */
+.add-section {
+  margin-bottom: 24px;
+}
+
+.tag-input {
+  width: 240px;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+}
+
+.tag-input:focus,
+.tag-input:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(208, 90, 110, 0.06);
+}
+
+.add-btn {
+  height: 42px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: var(--color-primary);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.add-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 8px rgba(208, 90, 110, 0.15);
+  transform: translateY(-1px);
+}
+
+/* 标签容器 */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 200px;
+  padding: 4px;
+}
+
+.skill-tag.ant-tag {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 14px;
+  line-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.skill-tag.ant-tag .ant-tag-close-icon {
+  margin-inline-start: 2px;
+  opacity: 0.9;
+}
+
+.skill-tag.ant-tag:hover {
+  filter: brightness(0.98);
+}
+
+/* 空状态 */
+.empty-state {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.empty-state svg {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #d1d5db;
+}

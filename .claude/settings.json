@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/code/digital_portrait/$HOME/.claude/**)",
+      "Read(//d/code/digital_portrait/$HOME/.claude/skills/**)",
+      "Read(//d/code/digital_portrait/$HOME/.claude/skills/frontend-design/**)",
+      "Bash(/plugin marketplace:*)",
+      "Bash(curl -s http://127.0.0.1:8000/api/auth/login -X POST -H \"Content-Type: application/json\" -d '{\"\"ehr_no\"\":\"\"0000001\"\",\"\"password\"\":\"\"1234567\"\"}')",
+      "Bash(python -c \":*)",
+      "Bash(find /d/code/digital_portrait -type d -name *TZfrontend* -o -name *frontend*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

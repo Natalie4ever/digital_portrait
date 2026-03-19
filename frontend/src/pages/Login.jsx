@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Card, message } from 'antd';
+import { Form, Input, Button, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { login, setToken } from '../api';
 import { useAuth } from '../contexts/AuthContext';
+import './Login.css';
+
+const { Title, Paragraph } = Typography;
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -14,7 +17,7 @@ export default function Login() {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const data = await login(values.ehr_no.trim(), values.password);
+      const data = await login(values.username.trim(), values.password);
       setToken(data.access_token);
       await refreshUser();
       message.success('登录成功');
@@ -27,39 +30,87 @@ export default function Login() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f2f5' }}>
-      <Card title="员工数字画像系统" style={{ width: 360, flexShrink: 0 }}>
-        <Form form={form} onFinish={handleSubmit} layout="vertical" size="large">
-          <Form.Item
-            name="ehr_no"
-            label="EHR 号"
-            rules={[
-              { required: true, message: '请输入 EHR 号' },
-              { pattern: /^\d{7}$/, message: 'EHR 号必须为 7 位数字' },
-            ]}
+    <div className="login-page">
+      {/* 左侧品牌展示区 */}
+      <div className="login-left">
+        <div className="login-left-content">
+          <div className="login-branding">
+            <div className="system-icon">
+              <UserOutlined />
+            </div>
+            <Title level={2} className="system-name">员工数字画像系统</Title>
+          </div>
+          <div className="login-intro">
+            <Title level={3}>员工档案管理</Title>
+            <Paragraph className="subtitle">数字化转型中心</Paragraph>
+            <Paragraph className="description">
+              高效、安全的员工档案管理平台，提供数据管理与分析服务。
+            </Paragraph>
+          </div>
+        </div>
+      </div>
+
+      {/* 右侧表单区 */}
+      <div className="login-right">
+        <div className="login-form-container">
+          <div className="form-header">
+            <Title level={4}>欢迎登录</Title>
+            <Paragraph className="form-hint">请使用您的 EHR 号和密码登录系统</Paragraph>
+          </div>
+
+          <Form
+            name="login-form"
+            className="login-form"
+            initialValues={{ remember: true }}
+            onFinish={handleSubmit}
+            form={form}
           >
-            <Input
-              prefix={<UserOutlined />}
-              placeholder="7 位数字"
-              autoComplete="username"
-              maxLength={7}
-              inputMode="numeric"
-              onChange={(e) => {
-                const v = e.target.value.replace(/\D/g, '').slice(0, 7);
-                form.setFieldsValue({ ehr_no: v });
-              }}
-            />
-          </Form.Item>
-          <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="请输入密码" autoComplete="current-password" />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
-              登录
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
+            <Form.Item
+              name="username"
+              rules={[
+                { required: true, message: '请输入EHR号' },
+                { pattern: /^\d{7}$/, message: 'EHR号必须是7位数字' }
+              ]}
+            >
+              <Input
+                prefix={<UserOutlined className="site-form-item-icon" />}
+                placeholder="请输入7位EHR号"
+                size="large"
+              />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              rules={[
+                { required: true, message: '请输入密码' },
+                { min: 6, message: '密码至少6个字符' }
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined className="site-form-item-icon" />}
+                placeholder="请输入密码"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item className="form-button">
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="login-form-button"
+                block
+                size="large"
+                loading={loading}
+              >
+                登录
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <div className="security-tips">
+            <Paragraph></Paragraph>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
