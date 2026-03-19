@@ -151,6 +151,32 @@
   color: #b45309;
 }
 
+/* 角色列：仿照档案管理，使用图标 + 文字徽章（非 tag） */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.role-badge-icon {
+  font-size: 12px;
+}
+
+.role-badge-user,
+.role-badge-leader,
+.role-badge-admin {
+  background: #f5f5f5;
+  border-color: #d9d9d9;
+  color: #333333;
+}
+
 @media (max-width: 991px) {
   .action-primary-btn {
     width: 100%;

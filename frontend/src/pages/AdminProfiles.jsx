@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Table, Space, Input, Select, Button, Alert, Tag, InputNumber, Row, Col } from 'antd';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilterOutlined, UserOutlined, TeamOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { listProfiles } from '../api';
 import { ROLE_OPTIONS } from '../constants';
@@ -13,6 +13,12 @@ const ROLE_TAG_COLORS = {
   user: { backgroundColor: '#EEF2FF', color: '#4F46E5', borderColor: '#A5B4FC' },
   leader: { backgroundColor: '#FEF3C7', color: '#92400E', borderColor: '#FCD34D' },
   admin: { backgroundColor: '#FEE2E2', color: '#991B1B', borderColor: '#FCA5A5' },
+};
+
+const ROLE_BADGE_META = {
+  user: { icon: UserOutlined, className: 'role-badge-user' },
+  leader: { icon: TeamOutlined, className: 'role-badge-leader' },
+  admin: { icon: SafetyOutlined, className: 'role-badge-admin' },
 };
 
 export default function AdminProfiles() {
@@ -71,12 +77,17 @@ export default function AdminProfiles() {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
-      width: 90,
-      render: (r) => (
-        <Tag style={{ ...ROLE_TAG_COLORS[r], borderRadius: 16, padding: '4px 12px', fontSize: 13 }}>
-          {ROLE_MAP[r]}
-        </Tag>
-      ),
+      width: 120,
+      render: (r) => {
+        const meta = ROLE_BADGE_META[r] || ROLE_BADGE_META.user;
+        const RoleIcon = meta.icon;
+        return (
+          <span className={`role-badge ${meta.className}`}>
+            <RoleIcon className="role-badge-icon" />
+            <span>{ROLE_MAP[r] || r}</span>
+          </span>
+        );
+      },
     },
     {
       title: '标签',
