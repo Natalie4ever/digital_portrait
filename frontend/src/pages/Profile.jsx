@@ -137,6 +137,19 @@ export default function Profile({ ehrOverride }) {
     }
   }, [ehrParam]);
 
+  const loadSilent = useCallback(async () => {
+    try {
+      const profilePromise = ehrParam ? getProfileByEhr(ehrParam) : getProfileMe();
+      const [p, t] = await Promise.all([profilePromise, listSkillTagTemplates()]);
+      setProfile(p);
+      setTemplates(t || []);
+      setBaseEdit(null);
+      setContactEdit(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [ehrParam]);
+
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
@@ -172,8 +185,7 @@ export default function Profile({ ehrOverride }) {
       };
       await updateProfileBase(body);
       message.success('已保存');
-      await load();
-      setBaseEdit(null);
+      await loadSilent();
     } catch (e) {
       if (e.errorFields) return;
       message.error(e.message);
@@ -183,9 +195,9 @@ export default function Profile({ ehrOverride }) {
   const saveContact = async () => {
     try {
       const values = await contactForm.validateFields();
-      await upsertContact(values);
+      const res = await upsertContact(values);
       message.success('已保存');
-      await load();
+      setProfile((prev) => ({ ...prev, contact: res }));
       setContactEdit(null);
     } catch (e) {
       if (e.errorFields) return;
@@ -240,14 +252,14 @@ export default function Profile({ ehrOverride }) {
 
   const addTag = async (tagName, templateId) => {
     try {
-      await addSkillTag({ tag_name: tagName, template_id: templateId || null });
-      await load();
+      const res = await addSkillTag({ tag_name: tagName, template_id: templateId || null });
+      setProfile((prev) => ({ ...prev, skill_tags: [...(prev.skill_tags || []), res] }));
     } catch (err) { message.error(err.message); }
   };
   const removeTag = async (id) => {
     try {
       await removeSkillTag(id);
-      await load();
+      setProfile((prev) => ({ ...prev, skill_tags: (prev.skill_tags || []).filter((t) => t.id !== id) }));
     } catch (err) { message.error(err.message); }
   };
 
@@ -761,6 +773,11 @@ function SkillTagBlock({ tags, templates, onAdd, onRemove }) {
   const handleAdd = () => {
     const name = (selTemplate || custom || '').trim();
     if (!name) return;
+    const exists = (tags || []).some((t) => (t.tag_name || '').trim().toLowerCase() === name.toLowerCase());
+    if (exists) {
+      message.warning('该标签已存在，请勿重复添加');
+      return;
+    }
     const t = templates.find((x) => x.name === name);
     onAdd(name, t?.id);
     setCustom('');
