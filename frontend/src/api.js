@@ -68,7 +68,10 @@ export async function getProfileByEhr(ehr_no) {
 }
 
 export async function listProfiles(params) {
-  const query = new URLSearchParams(params || {}).toString();
+  const cleaned = Object.fromEntries(
+    Object.entries(params || {}).filter(([, v]) => v !== undefined && v !== null && v !== '')
+  );
+  const query = new URLSearchParams(cleaned).toString();
   const qs = query ? `?${query}` : '';
   return api.get(`/profile/admin/list${qs}`);
 }

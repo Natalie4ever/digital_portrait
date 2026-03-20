@@ -27,7 +27,7 @@ export default function AdminProfiles() {
   const [data, setData] = useState({ total: 0, items: [] });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
-  const [filters, setFilters] = useState({ include_disabled: true });
+  const [filters, setFilters] = useState({ include_disabled: false });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
