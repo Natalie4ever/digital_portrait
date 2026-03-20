@@ -281,13 +281,16 @@
   align-items: center;
 }
 
-.home-visits-new-btn {
-  /* 自适应宽度，避免文字溢出 */
+/* 家访头部按钮统一样式（高度、内边距） */
+.home-visits-header-btn {
   height: 42px;
   min-width: 100px;
   padding: 4px 16px;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.home-visits-new-btn {
   /* 方案E：浅橙 */
   border-color: #ffc069;
   color: #d46b08;

@@ -234,7 +234,7 @@ export default function HomeVisitForm() {
         <Form form={form} layout="vertical" initialValues={{ is_visited: false, feedback: isEdit ? undefined : FEEDBACK_TEMPLATE }}>
           <div style={{ display: step === 0 ? 'block' : 'none' }}>
               <Row gutter={16}>
-                <Col span={12}>
+                <Col span={8}>
                   <Form.Item name="visited_ehr_no" label="被家访人" rules={[{ required: !isEdit, message: '请选择' }]}>
                     <Select
                       placeholder="选择组员"
@@ -246,8 +246,13 @@ export default function HomeVisitForm() {
                     />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                <Col span={8}>
                   <Form.Item name="position" label="岗位">
+                    <Input placeholder="可从档案带出" />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name="contact_phone" label="联系电话">
                     <Input placeholder="可从档案带出" />
                   </Form.Item>
                 </Col>
@@ -294,12 +299,12 @@ export default function HomeVisitForm() {
 
           <div style={{ display: step === 1 ? 'block' : 'none' }}>
               <Row gutter={16}>
-                <Col span={8}>
+                <Col span={12}>
                   <Form.Item label="团队名称">
                     <Input value="审核处理团队" disabled />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col span={12}>
                   <Form.Item name="visit_date" label="家访日期">
                     <DatePicker
                       format="YYYY-MM-DD"
@@ -308,11 +313,6 @@ export default function HomeVisitForm() {
                         if (date) form.setFieldsValue({ visit_time: date });
                       }}
                     />
-                  </Form.Item>
-                </Col>
-                <Col span={8}>
-                  <Form.Item name="contact_phone" label="联系电话">
-                    <Input />
                   </Form.Item>
                 </Col>
               </Row>

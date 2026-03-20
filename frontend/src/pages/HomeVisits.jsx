@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Space, Input, Select, Button, Alert, Tag, Modal } from 'antd';
-import { SearchOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card, Table, Space, Input, Select, Button, Alert, Tag, Modal, message } from 'antd';
+import { SearchOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined, ExportOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { listHomeVisits, deleteHomeVisit } from '../api';
+import * as XLSX from 'xlsx';
+import { listHomeVisits, deleteHomeVisit, getHomeVisit } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import './AdminProfiles.css';
+
+const EXPORT_HEADERS = ['被家访人', 'EHR号', '岗位', '家访年度', '家访时间', '家访方式', '家访地址', '家访人员及岗位', '联系电话', '是否已家访'];
 
 const VISIT_METHOD_OPTIONS = [
   { value: '线上', label: '线上' },
@@ -22,6 +25,8 @@ export default function HomeVisits() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteModal, setDeleteModal] = useState({ visible: false, id: null });
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [exporting, setExporting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -44,6 +49,10 @@ export default function HomeVisits() {
     load();
   }, [page, filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    setSelectedRowKeys([]);
+  }, [page, filters]);
+
   const handleDelete = async () => {
     if (!deleteModal.id) return;
     try {
@@ -57,6 +66,39 @@ export default function HomeVisits() {
 
   const canEdit = user?.role === 'leader';
   const canDelete = user?.role === 'leader' || user?.role === 'admin';
+
+  const handleExport = async () => {
+    const ids = selectedRowKeys.length > 0 ? selectedRowKeys : data.items.map((r) => r.id);
+    if (ids.length === 0) {
+      message.warning('请至少选择一条记录');
+      return;
+    }
+    setExporting(true);
+    try {
+      const details = await Promise.all(ids.map((id) => getHomeVisit(id)));
+      const rows = details.map((d) => [
+        d.visited_name || '—',
+        d.visited_ehr_no || '—',
+        d.position || '—',
+        d.visit_year || '—',
+        d.visit_time ? dayjs(d.visit_time).format('YYYY-MM-DD') : '—',
+        d.visit_method || '—',
+        d.visit_address || '—',
+        d.visitor_info || '—',
+        d.contact_phone || '—',
+        d.is_visited ? '已家访' : '未家访',
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([EXPORT_HEADERS, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '家访明细');
+      XLSX.writeFile(wb, `家访明细表_${dayjs().format('YYYY-MM-DD_HHmm')}.xlsx`);
+      message.success('导出成功');
+    } catch (err) {
+      message.error(err.message || '导出失败');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const columns = [
     {
@@ -141,16 +183,27 @@ export default function HomeVisits() {
           <h2 className="admin-title">家访记录</h2>
           <p className="admin-subtitle">查看和管理家访记录</p>
         </div>
-        {canEdit && (
+        <Space>
           <Button
             type="default"
-            icon={<PlusOutlined />}
-            onClick={() => navigate('/home-visits/new')}
-            className="home-visits-new-btn"
+            icon={<ExportOutlined />}
+            onClick={handleExport}
+            loading={exporting}
+            className="home-visits-header-btn"
           >
-            新建家访记录
+            导出明细表
           </Button>
-        )}
+          {canEdit && (
+            <Button
+              type="default"
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/home-visits/new')}
+              className="home-visits-new-btn home-visits-header-btn"
+            >
+              新建家访记录
+            </Button>
+          )}
+        </Space>
       </div>
 
       <Card className="admin-card">
@@ -214,6 +267,10 @@ export default function HomeVisits() {
 
         <Table
           rowKey="id"
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+          }}
           columns={columns}
           dataSource={data.items}
           loading={loading}
