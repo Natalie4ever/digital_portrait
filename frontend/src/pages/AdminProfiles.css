@@ -264,3 +264,45 @@
     border-radius: 8px;
   }
 }
+
+/* 家访记录 - 方案3：两行紧凑 + 新建次要色 */
+.home-visits-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.home-visits-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.home-visits-new-btn {
+  /* 自适应宽度，避免文字溢出 */
+  height: 42px;
+  min-width: 100px;
+  padding: 4px 16px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* 方案E：浅橙 */
+  border-color: #ffc069;
+  color: #d46b08;
+  background: #fff7e6;
+}
+
+.home-visits-new-btn:hover,
+.home-visits-new-btn:focus,
+.home-visits-new-btn:active {
+  border-color: #ff9c6e !important;
+  color: #ad4e00 !important;
+  background: #fff1e6 !important;
+}
+
+.home-visits-search-btn {
+  width: 100px;
+  height: 42px;
+}

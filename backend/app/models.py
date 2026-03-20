@@ -214,3 +214,43 @@ class OperationLog(Base):
     ip = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     user = relationship("User", back_populates="operation_logs", foreign_keys=[user_id])
+
+
+# 家访记录：组长对组员家访，团队名称固定为「审核处理团队」
+class HomeVisitRecord(Base):
+    __tablename__ = "home_visit_records"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    visited_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    visitor_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    visit_year = Column(Integer, nullable=False)
+    visit_time = Column(DateTime, nullable=False)
+    visit_method = Column(String(20), nullable=False)  # 线上/线下
+    visit_address = Column(String(500), nullable=True)
+    visitor_info = Column(String(500), nullable=True)
+    is_visited = Column(Boolean, default=False)
+
+    visit_date = Column(Date, nullable=True)
+    position = Column(String(200), nullable=True)
+    contact_phone = Column(String(20), nullable=True)
+    address = Column(String(500), nullable=True)
+    mobile = Column(String(20), nullable=True)
+    home_phone = Column(String(20), nullable=True)
+
+    family1_name = Column(String(100), nullable=True)
+    family1_relation = Column(String(50), nullable=True)
+    family1_contact = Column(String(50), nullable=True)
+    family1_work_unit = Column(String(300), nullable=True)
+
+    family2_name = Column(String(100), nullable=True)
+    family2_relation = Column(String(50), nullable=True)
+    family2_contact = Column(String(50), nullable=True)
+    family2_work_unit = Column(String(300), nullable=True)
+
+    feedback = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    visited_user = relationship("User", foreign_keys=[visited_user_id])
+    visitor_user = relationship("User", foreign_keys=[visitor_user_id])

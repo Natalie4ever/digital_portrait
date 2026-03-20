@@ -380,3 +380,116 @@ class AdminResetPasswordRequest(BaseModel):
     @classmethod
     def ehr_no_seven_digits(cls, v: str) -> str:
         return _validate_ehr_no(v)
+
+
+# ----- 家访记录 -----
+TEAM_NAME_FIXED = "审核处理团队"
+
+
+class HomeVisitRecordCreate(BaseModel):
+    visited_ehr_no: str
+    visit_year: int
+    visit_time: datetime
+    visit_method: str  # 线上/线下
+    visit_address: Optional[str] = None
+    visitor_info: Optional[str] = None
+    is_visited: bool = False
+    visit_date: Optional[date] = None
+    position: Optional[str] = None
+    contact_phone: Optional[str] = None
+    address: Optional[str] = None
+    mobile: Optional[str] = None
+    home_phone: Optional[str] = None
+    family1_name: Optional[str] = None
+    family1_relation: Optional[str] = None
+    family1_contact: Optional[str] = None
+    family1_work_unit: Optional[str] = None
+    family2_name: Optional[str] = None
+    family2_relation: Optional[str] = None
+    family2_contact: Optional[str] = None
+    family2_work_unit: Optional[str] = None
+    feedback: Optional[str] = None
+
+    @field_validator("visited_ehr_no")
+    @classmethod
+    def ehr_no_seven_digits(cls, v: str) -> str:
+        return _validate_ehr_no(v)
+
+
+class HomeVisitRecordUpdate(BaseModel):
+    visit_year: Optional[int] = None
+    visit_time: Optional[datetime] = None
+    visit_method: Optional[str] = None
+    visit_address: Optional[str] = None
+    visitor_info: Optional[str] = None
+    is_visited: Optional[bool] = None
+    visit_date: Optional[date] = None
+    position: Optional[str] = None
+    contact_phone: Optional[str] = None
+    address: Optional[str] = None
+    mobile: Optional[str] = None
+    home_phone: Optional[str] = None
+    family1_name: Optional[str] = None
+    family1_relation: Optional[str] = None
+    family1_contact: Optional[str] = None
+    family1_work_unit: Optional[str] = None
+    family2_name: Optional[str] = None
+    family2_relation: Optional[str] = None
+    family2_contact: Optional[str] = None
+    family2_work_unit: Optional[str] = None
+    feedback: Optional[str] = None
+
+
+class HomeVisitRecordListItem(BaseModel):
+    id: int
+    visited_ehr_no: str
+    visited_name: str
+    position: Optional[str] = None
+    visit_year: int
+    visit_time: datetime
+    visit_method: str
+    is_visited: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class HomeVisitRecordDetailResponse(BaseModel):
+    id: int
+    visited_user_id: int
+    visited_ehr_no: str
+    visited_name: str
+    visitor_user_id: int
+    visitor_name: str
+    visit_year: int
+    visit_time: datetime
+    visit_method: str
+    visit_address: Optional[str] = None
+    visitor_info: Optional[str] = None
+    is_visited: bool
+    visit_date: Optional[date] = None
+    position: Optional[str] = None
+    contact_phone: Optional[str] = None
+    address: Optional[str] = None
+    mobile: Optional[str] = None
+    home_phone: Optional[str] = None
+    family1_name: Optional[str] = None
+    family1_relation: Optional[str] = None
+    family1_contact: Optional[str] = None
+    family1_work_unit: Optional[str] = None
+    family2_name: Optional[str] = None
+    family2_relation: Optional[str] = None
+    family2_contact: Optional[str] = None
+    family2_work_unit: Optional[str] = None
+    feedback: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class HomeVisitRecordListResponse(BaseModel):
+    total: int
+    items: list[HomeVisitRecordListItem]

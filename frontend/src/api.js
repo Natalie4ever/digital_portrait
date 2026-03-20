@@ -193,3 +193,28 @@ export async function listOperationLogs(params = {}) {
   const q = new URLSearchParams(params).toString();
   return api.get('/admin/operation-logs' + (q ? '?' + q : ''));
 }
+
+// 家访记录
+export async function listHomeVisits(params = {}) {
+  const cleaned = Object.fromEntries(
+    Object.entries(params || {}).filter(([, v]) => v !== undefined && v !== null && v !== '')
+  );
+  const q = new URLSearchParams(cleaned).toString();
+  return api.get('/home-visits' + (q ? '?' + q : ''));
+}
+
+export async function getHomeVisit(id) {
+  return api.get(`/home-visits/${id}`);
+}
+
+export async function createHomeVisit(body) {
+  return api.post('/home-visits', body);
+}
+
+export async function updateHomeVisit(id, body) {
+  return api.put(`/home-visits/${id}`, body);
+}
+
+export async function deleteHomeVisit(id) {
+  return api.delete(`/home-visits/${id}`);
+}

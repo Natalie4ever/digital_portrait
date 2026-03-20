@@ -12,6 +12,9 @@ import AdminLogs from './pages/AdminLogs';
 import AdminSkillTags from './pages/AdminSkillTags';
 import AdminProfiles from './pages/AdminProfiles';
 import AdminProfileView from './pages/AdminProfileView';
+import HomeVisits from './pages/HomeVisits';
+import HomeVisitForm from './pages/HomeVisitForm';
+import HomeVisitDetail from './pages/HomeVisitDetail';
 
 function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
@@ -35,6 +38,10 @@ function AppRoutes() {
       >
         <Route index element={<Home />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="home-visits" element={<HomeVisits />} />
+        <Route path="home-visits/new" element={<HomeVisitForm />} />
+        <Route path="home-visits/:id" element={<HomeVisitDetail />} />
+        <Route path="home-visits/:id/edit" element={<HomeVisitForm />} />
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="admin/users" element={<PrivateRoute adminOnly><AdminUsers /></PrivateRoute>} />
         <Route path="admin/profiles" element={<PrivateRoute><AdminProfiles /></PrivateRoute>} />
@@ -47,9 +54,17 @@ function AppRoutes() {
   );
 }
 
+const antdTheme = {
+  token: {
+    colorPrimary: '#D05A6E',
+    colorPrimaryHover: '#BA4A5B',
+    colorPrimaryActive: '#A03D48',
+  },
+};
+
 export default function App() {
   return (
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider locale={zhCN} theme={antdTheme}>
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />

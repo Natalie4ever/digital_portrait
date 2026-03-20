@@ -12,7 +12,8 @@ import {
   FileTextOutlined,
   TeamOutlined,
   HistoryOutlined,
-  TagsOutlined
+  TagsOutlined,
+  HomeFilled
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
@@ -59,6 +60,11 @@ export default function Layout() {
       key: '/profile',
       icon: <IdcardOutlined />,
       label: <Link to="/profile">我的档案</Link>,
+    },
+    {
+      key: '/home-visits',
+      icon: <HomeFilled />,
+      label: <Link to="/home-visits">家访记录</Link>,
     },
     ...(user.role === 'admin' || user.role === 'leader' ? [
       {

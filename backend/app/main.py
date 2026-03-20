@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import engine, Base
-from app.routers import auth, profile, users, operation_logs, skill_tags
+from app.routers import auth, profile, users, operation_logs, skill_tags, home_visits
 
 app = FastAPI(title="员工数字画像系统", description="内网单机部署")
 
@@ -21,6 +21,7 @@ app.include_router(profile.router)
 app.include_router(users.router)
 app.include_router(operation_logs.router)
 app.include_router(skill_tags.router)
+app.include_router(home_visits.router)
 
 
 @app.on_event("startup")
