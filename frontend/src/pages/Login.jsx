@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, message, Typography } from 'antd';
+import { Form, Input, Button, message, Typography, Spin } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { login, setToken } from '../api';
+import { login, setToken, checkEhr } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
@@ -10,9 +10,53 @@ const { Title, Paragraph } = Typography;
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const [ehrValidated, setEhrValidated] = useState(false);
+  const [ehrUserName, setEhrUserName] = useState('');
+  const [ehrChecking, setEhrChecking] = useState(false);
+  const [ehrError, setEhrError] = useState('');
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [form] = Form.useForm();
+
+  const handleEhrBlur = async () => {
+    const ehr = form.getFieldValue('username')?.trim();
+    if (!ehr || !/^\d{7}$/.test(ehr)) {
+      setEhrValidated(false);
+      setEhrUserName('');
+      setEhrError('');
+      return;
+    }
+    setEhrChecking(true);
+    setEhrError('');
+    try {
+      const res = await checkEhr(ehr);
+      setEhrValidated(true);
+      setEhrUserName(res.name || '');
+    } catch (err) {
+      setEhrValidated(false);
+      setEhrUserName('');
+      setEhrError(err.message || 'EHR号不存在');
+    } finally {
+      setEhrChecking(false);
+    }
+  };
+
+  const handleEhrChange = () => {
+    setEhrValidated(false);
+    setEhrUserName('');
+    setEhrError('');
+  };
+
+  const handleValuesChange = (changed, allValues) => {
+    if ('username' in changed) {
+      const ehr = (allValues.username ?? '')?.trim();
+      if (ehr && /^\d{7}$/.test(ehr)) {
+        handleEhrBlur();
+      } else {
+        handleEhrChange();
+      }
+    }
+  };
 
   const handleSubmit = async (values) => {
     setLoading(true);
@@ -63,6 +107,7 @@ export default function Login() {
             className="login-form"
             initialValues={{ remember: true }}
             onFinish={handleSubmit}
+            onValuesChange={handleValuesChange}
             form={form}
           >
             <Form.Item
@@ -71,13 +116,22 @@ export default function Login() {
                 { required: true, message: '请输入EHR号' },
                 { pattern: /^\d{7}$/, message: 'EHR号必须是7位数字' }
               ]}
+              validateStatus={ehrError ? 'error' : undefined}
+              help={ehrError}
             >
               <Input
                 prefix={<UserOutlined className="site-form-item-icon" />}
                 placeholder="请输入7位EHR号"
                 size="large"
+                onBlur={handleEhrBlur}
+                suffix={ehrChecking ? <Spin size="small" /> : null}
               />
             </Form.Item>
+            {ehrValidated && ehrUserName && (
+              <div style={{ marginBottom: 16, color: '#52c41a', fontSize: 14 }}>
+                欢迎，{ehrUserName}
+              </div>
+            )}
             <Form.Item
               name="password"
               rules={[
@@ -100,6 +154,7 @@ export default function Login() {
                 block
                 size="large"
                 loading={loading}
+                disabled={!ehrValidated}
               >
                 登录
               </Button>

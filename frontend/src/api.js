@@ -45,6 +45,10 @@ export const api = {
 };
 
 // 认证
+export async function checkEhr(ehr_no) {
+  return api.get(`/auth/check-ehr/${encodeURIComponent(ehr_no.trim())}`);
+}
+
 export async function login(ehr_no, password) {
   const data = await api.post('/auth/login', { ehr_no, password });
   return data;
