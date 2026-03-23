@@ -18,7 +18,7 @@ from app.schemas import (
     HomeVisitRecordDetailResponse,
     HomeVisitRecordListResponse,
 )
-from app.auth import get_current_user
+from app.auth import get_current_user, leader_effective_group
 from app.validators import validate_ehr_no
 from app.operation_log import log_operation
 
@@ -28,8 +28,10 @@ router = APIRouter(prefix="/api/home-visits", tags=["家访记录"])
 def _can_access_record(viewer: User, record: HomeVisitRecord, visited_user: User) -> bool:
     if viewer.role == "admin":
         return True
-    if viewer.role == "leader" and viewer.group_name and viewer.group_name == visited_user.group_name:
-        return True
+    if viewer.role == "leader":
+        vg = leader_effective_group(viewer)
+        if vg and vg == (visited_user.group_name or "").strip():
+            return True
     if record.visited_user_id == viewer.id:
         return True
     return False
@@ -39,15 +41,20 @@ def _can_edit_record(viewer: User, visited_user: User) -> bool:
     """仅组长可编辑，且被家访人须为本组成员"""
     if viewer.role != "leader":
         return False
-    return viewer.group_name and viewer.group_name == visited_user.group_name
+    vg = leader_effective_group(viewer)
+    if not vg:
+        return False
+    return vg == (visited_user.group_name or "").strip()
 
 
 def _can_delete_record(viewer: User, visited_user: User) -> bool:
     """组长可删本组记录，管理员可删任意"""
     if viewer.role == "admin":
         return True
-    if viewer.role == "leader" and viewer.group_name and viewer.group_name == visited_user.group_name:
-        return True
+    if viewer.role == "leader":
+        vg = leader_effective_group(viewer)
+        if vg and vg == (visited_user.group_name or "").strip():
+            return True
     return False
 
 
@@ -125,8 +132,14 @@ async def list_home_visits(
     )
     if current_user.role == "user":
         base_q = base_q.where(HomeVisitRecord.visited_user_id == current_user.id)
-    elif current_user.role == "leader" and current_user.group_name:
-        base_q = base_q.where(User.group_name == current_user.group_name)
+    elif current_user.role == "leader":
+        lg = leader_effective_group(current_user)
+        if lg is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="组长未配置有效组别，无法查看家访列表，请联系管理员",
+            )
+        base_q = base_q.where(User.group_name == lg)
 
     if visited_ehr:
         try:
@@ -199,13 +212,17 @@ async def create_home_visit(
     if current_user.role != "leader":
         raise HTTPException(status_code=403, detail="仅组长可新建家访记录")
 
+    lg = leader_effective_group(current_user)
+    if lg is None:
+        raise HTTPException(status_code=403, detail="组长未配置有效组别，无法新建家访记录")
+
     target = await db.execute(
         select(User).where(User.ehr_no == body.visited_ehr_no, User.deleted_at.is_(None))
     )
     target_user = target.scalar_one_or_none()
     if not target_user:
         raise HTTPException(status_code=404, detail="被家访人不存在")
-    if target_user.group_name != current_user.group_name:
+    if (target_user.group_name or "").strip() != lg:
         raise HTTPException(status_code=403, detail="只能对本组成员进行家访")
 
     record = HomeVisitRecord(

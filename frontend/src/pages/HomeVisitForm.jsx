@@ -51,8 +51,12 @@ export default function HomeVisitForm() {
       .then((res) => {
         const items = (res.items || []).filter((u) => u.ehr_no && u.name);
         setMemberOptions(items.map((u) => ({ value: u.ehr_no, label: `${u.name} (${u.ehr_no})` })));
+        setError('');
       })
-      .catch(() => setMemberOptions([]));
+      .catch((err) => {
+        setMemberOptions([]);
+        setError(err.message || '');
+      });
   }, [user?.role]);
 
   useEffect(() => {

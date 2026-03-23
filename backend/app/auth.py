@@ -86,12 +86,18 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
+def leader_effective_group(user: User) -> Optional[str]:
+    """组长用于权限判定的有效组别；未配置或仅空白时返回 None（不视为有本组范围）。"""
+    if user.role != "leader":
+        return None
+    g = (user.group_name or "").strip()
+    return g if g else None
+
+
 def can_access_user(viewer: User, target_ehr: str) -> bool:
+    """粗粒度：是否可能访问目标 EHR。组长能否看他人须在业务层结合对方组别判断。"""
     if viewer.role == "admin":
         return True
-    if viewer.role == "leader" and viewer.group_name:
-        # 组长只能看本组：需在业务层根据 target 的 group 判断
-        return True  # 具体在 API 里查 target 的 group
     if viewer.ehr_no == target_ehr:
         return True
     return False

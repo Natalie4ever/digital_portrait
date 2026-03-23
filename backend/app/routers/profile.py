@@ -58,7 +58,7 @@ from app.schemas import (
     ProfileListResponse,
     ProfileListItem,
 )
-from app.auth import get_current_user
+from app.auth import get_current_user, leader_effective_group
 from app.validators import validate_id_number, validate_mobile, validate_phone, validate_date, validate_ehr_no
 from app.operation_log import log_operation
 
@@ -68,8 +68,12 @@ router = APIRouter(prefix="/api/profile", tags=["个人档案"])
 def _can_access(viewer: User, target: User) -> bool:
     if viewer.role == "admin":
         return True
-    if viewer.role == "leader" and viewer.group_name and viewer.group_name == target.group_name:
-        return True
+    if viewer.role == "leader":
+        vg = leader_effective_group(viewer)
+        if not vg:
+            return False
+        tg = (target.group_name or "").strip()
+        return vg == tg
     if viewer.ehr_no == target.ehr_no:
         return True
     return False
@@ -149,8 +153,14 @@ async def list_profiles_admin(
         base_q = base_q.where(User.group_name == group_name)
     if role:
         base_q = base_q.where(User.role == role)
-    if current_user.role == "leader" and current_user.group_name:
-        base_q = base_q.where(User.group_name == current_user.group_name)
+    if current_user.role == "leader":
+        lg = leader_effective_group(current_user)
+        if lg is None:
+            raise HTTPException(
+                status_code=403,
+                detail="组长未配置有效组别，无法访问档案列表，请联系管理员",
+            )
+        base_q = base_q.where(User.group_name == lg)
 
     if tag:
         tag_subq = (

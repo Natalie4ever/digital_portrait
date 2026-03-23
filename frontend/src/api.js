@@ -13,6 +13,24 @@ export function clearToken() {
   localStorage.removeItem('token');
 }
 
+/** 组长账号未配置组别时，统一提示（与后端 403 文案对应） */
+export const LEADER_ASSIGN_GROUP_MESSAGE = '请联系管理分配组别';
+
+function normalizeErrorDetail(errBody) {
+  const d = errBody?.detail;
+  if (typeof d === 'string') return d;
+  if (Array.isArray(d) && d[0]?.msg) return d[0].msg;
+  return errBody?.message || '请求失败';
+}
+
+function normalizeErrorMessage(msg) {
+  if (typeof msg !== 'string') return String(msg);
+  if (msg.includes('组长未配置有效组别') || msg.includes('未配置有效组别')) {
+    return LEADER_ASSIGN_GROUP_MESSAGE;
+  }
+  return msg;
+}
+
 async function request(url, options = {}) {
   const token = getToken();
   const headers = {
@@ -28,10 +46,8 @@ async function request(url, options = {}) {
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    const msg = Array.isArray(err.detail) && err.detail[0]?.msg
-      ? err.detail[0].msg
-      : (err.detail || err.message || '请求失败');
-    throw new Error(msg);
+    const raw = normalizeErrorDetail(err);
+    throw new Error(normalizeErrorMessage(raw));
   }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
