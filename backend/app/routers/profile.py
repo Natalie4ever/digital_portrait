@@ -22,10 +22,8 @@ from app.models import (
     LanguageInfo,
     ContactInfo,
     ProfileSkillTag,
-    # Step 1 1.3 / 1.4
-    DevelopmentPosition,
-    DevelopmentDirection,
-    DevelopmentPlan,
+    # Step 1 1.3（修订版）/ 1.4
+    DevelopmentIntent,
     ProjectSummary,
     ProjectSummaryTag,
     SkillTagTemplate,
@@ -65,15 +63,8 @@ from app.schemas import (
     ProfileListResponse,
     ProfileListItem,
     # Step 1
-    DevelopmentPositionCreate,
-    DevelopmentPositionUpdate,
-    DevelopmentPositionResponse,
-    DevelopmentDirectionCreate,
-    DevelopmentDirectionUpdate,
-    DevelopmentDirectionResponse,
-    DevelopmentPlanCreate,
-    DevelopmentPlanUpdate,
-    DevelopmentPlanResponse,
+    DevelopmentIntentUpdate,
+    DevelopmentIntentResponse,
     ProjectSummaryCreate,
     ProjectSummaryUpdate,
     ProjectSummaryResponse,
@@ -153,6 +144,7 @@ async def list_profiles_admin(
     role: Optional[str] = None,
     tag: Optional[str] = None,
     commute_lt: Optional[int] = None,
+    is_emergency_staff: Optional[bool] = None,
     include_disabled: bool = True,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -181,6 +173,10 @@ async def list_profiles_admin(
                 detail="组长未配置有效组别，无法访问档案列表，请联系管理员",
             )
         base_q = base_q.where(User.group_name == lg)
+    if is_emergency_staff is not None:
+        base_q = base_q.where(
+            exists().where(Profile.user_id == User.id, Profile.is_emergency_staff == is_emergency_staff)
+        )
 
     if tag:
         tag_subq = (
@@ -227,10 +223,12 @@ async def list_profiles_admin(
         profile = u.profile
         tags: list[str] = []
         commute_minutes: Optional[int] = None
+        is_emergency = False
         if profile:
             tags = [t.tag_name for t in profile.skill_tags]
             if profile.contact:
                 commute_minutes = profile.contact.commute_minutes
+            is_emergency = bool(profile.is_emergency_staff)
         items.append(
             ProfileListItem(
                 ehr_no=u.ehr_no,
@@ -239,9 +237,49 @@ async def list_profiles_admin(
                 role=u.role,
                 tags=tags,
                 commute_minutes=commute_minutes,
+                is_emergency_staff=is_emergency,
             )
         )
     return ProfileListResponse(total=total, items=items)
+
+
+# ===================== Step 1 1.1（修订）: 档案管理列表切换应急先锋队 =====================
+@router.post("/admin/{ehr_no}/toggle-emergency")
+async def toggle_emergency_profile(
+    ehr_no: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """档案管理列表调用：admin 可切任意人，leader 仅可切本组"""
+    if current_user.role not in ("admin", "leader"):
+        raise HTTPException(status_code=403, detail="无权限标记应急先锋队")
+    try:
+        ehr_no = validate_ehr_no(ehr_no)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    r = await db.execute(
+        select(User)
+        .where(User.ehr_no == ehr_no, User.deleted_at.is_(None))
+        .options(selectinload(User.profile))
+    )
+    user = r.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    if current_user.role == "leader":
+        lg = leader_effective_group(current_user)
+        if not lg or (user.group_name or "").strip() != lg:
+            raise HTTPException(status_code=403, detail="仅可标记本组成员")
+    profile = user.profile
+    if not profile:
+        profile = Profile(user_id=user.id)
+        db.add(profile)
+        await db.flush()
+    profile.is_emergency_staff = not bool(profile.is_emergency_staff)
+    await log_operation(
+        db, current_user.id, "toggle_emergency_staff", "profile",
+        f"{ehr_no} -> is_emergency_staff={profile.is_emergency_staff}", None,
+    )
+    return {"ehr_no": ehr_no, "is_emergency_staff": profile.is_emergency_staff}
 
 
 async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse:
@@ -259,10 +297,8 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
             selectinload(Profile.language),
             selectinload(Profile.contact),
             selectinload(Profile.skill_tags),
-            # Step 1
-            selectinload(Profile.development_positions),
-            selectinload(Profile.development_directions),
-            selectinload(Profile.development_plans),
+            # Step 1 1.3（修订版）
+            selectinload(Profile.development_intent),
             selectinload(Profile.project_summaries).selectinload(ProjectSummary.tags),
         )
     )
@@ -278,9 +314,7 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
     language = []
     contact = None
     skill_tags = []
-    development_positions = []
-    development_directions = []
-    development_plans = []
+    development_intent = None
     project_summaries = []
     if profile:
         base = ProfileBaseUpdate(
@@ -309,10 +343,36 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
         if profile.contact:
             contact = ContactInfoResponse.model_validate(profile.contact)
         skill_tags = [ProfileSkillTagResponse.model_validate(s) for s in profile.skill_tags]
-        # Step 1 1.3 / 1.4
-        development_positions = [DevelopmentPositionResponse.model_validate(p) for p in profile.development_positions]
-        development_directions = [DevelopmentDirectionResponse.model_validate(d) for d in profile.development_directions]
-        development_plans = [DevelopmentPlanResponse.model_validate(p) for p in profile.development_plans]
+        # Step 1 1.3（修订版）：发展意向 1:1
+        if profile.development_intent:
+            di = profile.development_intent
+            import json
+            def _loads_list(v):
+                if not v:
+                    return []
+                if isinstance(v, list):
+                    return v
+                try:
+                    parsed = json.loads(v)
+                    return parsed if isinstance(parsed, list) else []
+                except Exception:
+                    return []
+            development_intent = DevelopmentIntentResponse(
+                id=di.id,
+                profile_id=di.profile_id,
+                development_path=di.development_path,
+                short_term_goal=di.short_term_goal,
+                mid_term_goal=di.mid_term_goal,
+                core_abilities=_loads_list(di.core_abilities),
+                learning_methods=_loads_list(di.learning_methods),
+                learning_courses=di.learning_courses,
+                rotation_interest=di.rotation_interest,
+                rotation_target=di.rotation_target,
+                project_interests=_loads_list(di.project_interests),
+                other_comments=di.other_comments,
+                created_at=di.created_at,
+                updated_at=di.updated_at,
+            )
         # 项目总结：批量查标签名避免 lazy load 触发 greenlet 错误
         all_tag_ids = list({t.tag_id for p in profile.project_summaries for t in p.tags})
         tag_name_map: dict[int, str] = {}
@@ -358,9 +418,7 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
         language=language,
         contact=contact,
         skill_tags=skill_tags,
-        development_positions=development_positions,
-        development_directions=development_directions,
-        development_plans=development_plans,
+        development_intent=development_intent,
         project_summaries=project_summaries,
     )
 
@@ -997,228 +1055,115 @@ async def delete_skill_tag_me(
     return {"message": "ok"}
 
 
-# ===================== Step 1 1.3: 发展意向 3 张子表 CRUD =====================
+# ===================== Step 1 1.3（修订版）: 发展意向 1:1 单表 =====================
+import json as _json
 
-# ----- 意向岗位 -----
-@router.post("/me/development-position", response_model=DevelopmentPositionResponse)
-async def create_development_position_me(
-    body: DevelopmentPositionCreate,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+def _dump_list_to_str(v) -> str | None:
+    """多选数组序列化为 JSON 字符串存库（None/空保持 None）"""
+    if v is None:
+        return None
+    if isinstance(v, str):
+        return v if v else None
+    if isinstance(v, list):
+        if not v:
+            return None
+        return _json.dumps(v, ensure_ascii=False)
+    return None
+
+
+@router.get("/me/development-intent", response_model=Optional[DevelopmentIntentResponse])
+async def get_development_intent_me(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    target_time = validate_date(body.target_time) if body.target_time else None
-    obj = DevelopmentPosition(
-        profile_id=profile.id,
-        position_name=body.position_name,
-        note=body.note,
-        status=body.status,
-        target_time=target_time,
-    )
-    db.add(obj)
-    await db.flush()
-    await log_operation(db, current_user.id, "create", "development_position", str(obj.id), None)
-    return DevelopmentPositionResponse.model_validate(obj)
-
-
-@router.put("/me/development-position/{item_id}", response_model=DevelopmentPositionResponse)
-async def update_development_position_me(
-    item_id: int,
-    body: DevelopmentPositionUpdate,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    profile = await _get_or_create_profile(db, current_user.id)
     result = await db.execute(
-        select(DevelopmentPosition).where(
-            DevelopmentPosition.id == item_id,
-            DevelopmentPosition.profile_id == profile.id,
-        )
+        select(DevelopmentIntent).where(DevelopmentIntent.profile_id == profile.id)
     )
     obj = result.scalar_one_or_none()
     if not obj:
-        raise HTTPException(status_code=404, detail="记录不存在")
+        return None
+
+    def _loads_list_safe(v):
+        if v is None or v == "":
+            return []
+        if isinstance(v, list):
+            return v
+        try:
+            parsed = _json.loads(v)
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
+    return DevelopmentIntentResponse(
+        id=obj.id,
+        profile_id=obj.profile_id,
+        development_path=obj.development_path,
+        short_term_goal=obj.short_term_goal,
+        mid_term_goal=obj.mid_term_goal,
+        core_abilities=_loads_list_safe(obj.core_abilities),
+        learning_methods=_loads_list_safe(obj.learning_methods),
+        learning_courses=obj.learning_courses,
+        rotation_interest=obj.rotation_interest,
+        rotation_target=obj.rotation_target,
+        project_interests=_loads_list_safe(obj.project_interests),
+        other_comments=obj.other_comments,
+        created_at=obj.created_at,
+        updated_at=obj.updated_at,
+    )
+
+
+@router.put("/me/development-intent", response_model=DevelopmentIntentResponse)
+async def upsert_development_intent_me(
+    body: DevelopmentIntentUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile = await _get_or_create_profile(db, current_user.id)
+    result = await db.execute(
+        select(DevelopmentIntent).where(DevelopmentIntent.profile_id == profile.id)
+    )
+    obj = result.scalar_one_or_none()
     data = body.model_dump(exclude_unset=True)
-    for k, v in data.items():
-        if k == "target_time" and v is not None:
-            v = validate_date(v)
-        setattr(obj, k, v)
-    db.add(obj)
-    await db.flush()
-    await log_operation(db, current_user.id, "update", "development_position", str(item_id), None)
-    return DevelopmentPositionResponse.model_validate(obj)
-
-
-@router.delete("/me/development-position/{item_id}")
-async def delete_development_position_me(
-    item_id: int,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    result = await db.execute(
-        select(DevelopmentPosition).where(
-            DevelopmentPosition.id == item_id,
-            DevelopmentPosition.profile_id == profile.id,
-        )
-    )
-    obj = result.scalar_one_or_none()
+    # 序列化多选字段为 JSON 字符串存库
+    for k in ("core_abilities", "learning_methods", "project_interests"):
+        if k in data:
+            data[k] = _dump_list_to_str(data[k])
     if not obj:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    await db.delete(obj)
-    await log_operation(db, current_user.id, "delete", "development_position", str(item_id), None)
-    return {"message": "ok"}
-
-
-# ----- 学习方向 -----
-@router.post("/me/development-direction", response_model=DevelopmentDirectionResponse)
-async def create_development_direction_me(
-    body: DevelopmentDirectionCreate,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    target_time = validate_date(body.target_time) if body.target_time else None
-    obj = DevelopmentDirection(
-        profile_id=profile.id,
-        direction_name=body.direction_name,
-        note=body.note,
-        status=body.status,
-        target_time=target_time,
-    )
-    db.add(obj)
+        obj = DevelopmentIntent(profile_id=profile.id, **data)
+        db.add(obj)
+    else:
+        for k, v in data.items():
+            setattr(obj, k, v)
     await db.flush()
-    await log_operation(db, current_user.id, "create", "development_direction", str(obj.id), None)
-    return DevelopmentDirectionResponse.model_validate(obj)
-
-
-@router.put("/me/development-direction/{item_id}", response_model=DevelopmentDirectionResponse)
-async def update_development_direction_me(
-    item_id: int,
-    body: DevelopmentDirectionUpdate,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    result = await db.execute(
-        select(DevelopmentDirection).where(
-            DevelopmentDirection.id == item_id,
-            DevelopmentDirection.profile_id == profile.id,
-        )
+    await db.refresh(obj)
+    await log_operation(db, current_user.id, "upsert", "development_intent", str(profile.id), None)
+    # 手动构造响应：把 JSON 字符串字段反序列化为 list
+    def _loads_list_safe(v):
+        if v is None or v == "":
+            return []
+        if isinstance(v, list):
+            return v
+        try:
+            parsed = _json.loads(v)
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
+    return DevelopmentIntentResponse(
+        id=obj.id,
+        profile_id=obj.profile_id,
+        development_path=obj.development_path,
+        short_term_goal=obj.short_term_goal,
+        mid_term_goal=obj.mid_term_goal,
+        core_abilities=_loads_list_safe(obj.core_abilities),
+        learning_methods=_loads_list_safe(obj.learning_methods),
+        learning_courses=obj.learning_courses,
+        rotation_interest=obj.rotation_interest,
+        rotation_target=obj.rotation_target,
+        project_interests=_loads_list_safe(obj.project_interests),
+        other_comments=obj.other_comments,
+        created_at=obj.created_at,
+        updated_at=obj.updated_at,
     )
-    obj = result.scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    data = body.model_dump(exclude_unset=True)
-    for k, v in data.items():
-        if k == "target_time" and v is not None:
-            v = validate_date(v)
-        setattr(obj, k, v)
-    db.add(obj)
-    await db.flush()
-    await log_operation(db, current_user.id, "update", "development_direction", str(item_id), None)
-    return DevelopmentDirectionResponse.model_validate(obj)
-
-
-@router.delete("/me/development-direction/{item_id}")
-async def delete_development_direction_me(
-    item_id: int,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    result = await db.execute(
-        select(DevelopmentDirection).where(
-            DevelopmentDirection.id == item_id,
-            DevelopmentDirection.profile_id == profile.id,
-        )
-    )
-    obj = result.scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    await db.delete(obj)
-    await log_operation(db, current_user.id, "delete", "development_direction", str(item_id), None)
-    return {"message": "ok"}
-
-
-# ----- 职业规划 -----
-@router.post("/me/development-plan", response_model=DevelopmentPlanResponse)
-async def create_development_plan_me(
-    body: DevelopmentPlanCreate,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    target_time = validate_date(body.target_time) if body.target_time else None
-    obj = DevelopmentPlan(
-        profile_id=profile.id,
-        plan_content=body.plan_content,
-        note=body.note,
-        status=body.status,
-        target_time=target_time,
-    )
-    db.add(obj)
-    await db.flush()
-    await log_operation(db, current_user.id, "create", "development_plan", str(obj.id), None)
-    return DevelopmentPlanResponse.model_validate(obj)
-
-
-@router.put("/me/development-plan/{item_id}", response_model=DevelopmentPlanResponse)
-async def update_development_plan_me(
-    item_id: int,
-    body: DevelopmentPlanUpdate,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    result = await db.execute(
-        select(DevelopmentPlan).where(
-            DevelopmentPlan.id == item_id,
-            DevelopmentPlan.profile_id == profile.id,
-        )
-    )
-    obj = result.scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    data = body.model_dump(exclude_unset=True)
-    for k, v in data.items():
-        if k == "target_time" and v is not None:
-            v = validate_date(v)
-        setattr(obj, k, v)
-    db.add(obj)
-    await db.flush()
-    await log_operation(db, current_user.id, "update", "development_plan", str(item_id), None)
-    return DevelopmentPlanResponse.model_validate(obj)
-
-
-@router.delete("/me/development-plan/{item_id}")
-async def delete_development_plan_me(
-    item_id: int,
-    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
-    result = await db.execute(
-        select(DevelopmentPlan).where(
-            DevelopmentPlan.id == item_id,
-            DevelopmentPlan.profile_id == profile.id,
-        )
-    )
-    obj = result.scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    await db.delete(obj)
-    await log_operation(db, current_user.id, "delete", "development_plan", str(item_id), None)
-    return {"message": "ok"}
 
 
 # ===================== Step 1 1.4: 项目总结 CRUD（含技能标签多对多） =====================

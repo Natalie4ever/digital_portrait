@@ -110,28 +110,43 @@ export const ROLE_OPTIONS = [
   { value: 'admin', label: '管理员' },
 ];
 
-// Step 1 1.3: 发展意向字典
-export const DEVELOPMENT_POSITION_OPTIONS = [
-  { value: '管理岗', label: '管理岗' },
-  { value: '技术岗', label: '技术岗' },
-  { value: '业务岗', label: '业务岗' },
-  { value: '综合岗', label: '综合岗' },
-  { value: '其他', label: '其他' },
-];
+// Step 1 1.3（修订版）: 发展意向字典 - 4 个部分
+export const DEVELOPMENT_PATH_OPTIONS = [
+  { value: '专业深耕路径', label: '专业深耕路径（成为领域专家/资深人士）' },
+  { value: '管理发展路径', label: '管理发展路径（团队主管/部门负责人）' },
+  { value: '横向拓展路径', label: '横向拓展路径（复合型人才）' },
+  { value: '项目/创新路径', label: '项目/创新路径（项目负责人/技术创新）' },
+].map((o) => ({ value: o.value, label: o.label }));
 
-export const DEVELOPMENT_DIRECTION_OPTIONS = [
-  { value: '管理能力', label: '管理能力' },
-  { value: '技术能力', label: '技术能力' },
-  { value: '业务能力', label: '业务能力' },
-  { value: '沟通能力', label: '沟通能力' },
-  { value: '其他', label: '其他' },
-];
+export const CORE_ABILITY_OPTIONS = [
+  { value: '专业硬技能', label: '专业硬技能（如：Python/SQL数据分析、监管政策深度解读、新核心系统运维、财务建模等）' },
+  { value: '流程与项目管理', label: '流程与项目管理（如：精益六西格玛、敏捷项目管理、复杂项目协调）' },
+  { value: '沟通与影响力', label: '沟通与影响力（如：跨部门高效沟通、向上汇报、方案说服）' },
+  { value: '创新与问题解决', label: '创新与问题解决（如：设计思维、复杂问题分析与解决）' },
+  { value: '团队协作与指导', label: '团队协作与指导（如：辅导新人、虚拟团队协作）' },
+].map((o) => ({ value: o.value, label: o.label }));
 
-export const DEVELOPMENT_STATUS_OPTIONS = [
-  { value: 'planned', label: '计划中' },
-  { value: 'ongoing', label: '进行中' },
-  { value: 'done', label: '已达成' },
-];
+export const LEARNING_METHOD_OPTIONS = [
+  { value: '行内专业培训', label: '行内专业培训' },
+  { value: '外部认证课程', label: '外部认证课程（如：PMP、CFA、CISA等）' },
+  { value: '在线学习平台', label: '在线学习平台课程' },
+  { value: '书籍资料自学', label: '书籍/资料自学' },
+  { value: '师徒制', label: '"师徒制"跟随资深同事学习' },
+  { value: '行业研讨会', label: '参与行业研讨会/论坛' },
+].map((o) => ({ value: o.value, label: o.label }));
+
+export const PROJECT_INTEREST_OPTIONS = [
+  { value: '数字化转型', label: '数字化转型项目（如：RPA流程自动化、数据中台建设）' },
+  { value: '系统升级运维', label: '重大系统升级或运维项目' },
+  { value: '流程优化', label: '关键业务流程优化或重构项目' },
+  { value: '跨部门协同', label: '跨部门协同攻坚项目' },
+  { value: '创新课题', label: '创新课题研究项目' },
+].map((o) => ({ value: o.value, label: o.label }));
+
+export const ROTATION_INTEREST_OPTIONS = [
+  { value: '是', label: '是，愿意尝试短期轮岗或借调' },
+  { value: '否', label: '否，希望专注当前领域' },
+].map((o) => ({ value: o.value, label: o.label }));
 
 // Step 1 1.4: 项目总结字典
 export const PROJECT_ROLE_OPTIONS = [

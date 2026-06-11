@@ -1,6 +1,32 @@
 /* ==================== 用户管理页面样式 ==================== */
 @import './AdminProfiles.css';
 
+/* 应急先锋队 Tag（Step 1 1.1 修订）*/
+.emergency-tag-on {
+  display: inline-block;
+  padding: 2px 10px;
+  background-color: #fff1f0;
+  color: #cf1322;
+  border: 1px solid #ffa39e;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.emergency-tag-on:hover {
+  background-color: #ffccc7;
+}
+.emergency-tag-off {
+  display: inline-block;
+  padding: 2px 10px;
+  color: #999;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.emergency-tag-off:hover {
+  color: #1890ff;
+}
+
 /* 状态按钮 */
 .status-btn {
   border-radius: 4px;

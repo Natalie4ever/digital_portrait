@@ -31,6 +31,14 @@ class User(Base):
     profile = relationship("Profile", back_populates="user", uselist=False)
     operation_logs = relationship("OperationLog", back_populates="user", foreign_keys="OperationLog.user_id")
 
+    @property
+    def is_emergency_staff(self) -> bool:
+        """便捷访问：用户是否应急先锋队（来自 profile.is_emergency_staff）"""
+        try:
+            return bool(self.profile and self.profile.is_emergency_staff)
+        except Exception:
+            return False
+
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -64,10 +72,8 @@ class Profile(Base):
     language = relationship("LanguageInfo", back_populates="profile")
     contact = relationship("ContactInfo", back_populates="profile", uselist=False)
     skill_tags = relationship("ProfileSkillTag", back_populates="profile")
-    # Step 1 1.3 + 1.4: 发展意向（三类独立子表）+ 项目总结
-    development_positions = relationship("DevelopmentPosition", back_populates="profile", cascade="all, delete-orphan")
-    development_directions = relationship("DevelopmentDirection", back_populates="profile", cascade="all, delete-orphan")
-    development_plans = relationship("DevelopmentPlan", back_populates="profile", cascade="all, delete-orphan")
+    # Step 1 1.3（修订版）: 发展意向 1:1 单表 + 项目总结
+    development_intent = relationship("DevelopmentIntent", back_populates="profile", uselist=False, cascade="all, delete-orphan")
     project_summaries = relationship("ProjectSummary", back_populates="profile", cascade="all, delete-orphan")
 
 
@@ -195,46 +201,34 @@ class ContactInfo(Base):
     profile = relationship("Profile", back_populates="contact")
 
 
-# Step 1 1.3: 发展意向 - 意向岗位（多条目）
-class DevelopmentPosition(Base):
-    __tablename__ = "development_position"
+# Step 1 1.3（修订版）: 发展意向 - 1:1 单表，按银行后台岗位发展意向表单设计
+# 4 个部分：职业发展方向 / 能力提升与学习需求 / 实践机会意向 / 其他补充
+class DevelopmentIntent(Base):
+    __tablename__ = "development_intent"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
-    position_name = Column(String(100), nullable=False)
-    note = Column(Text, nullable=True)
-    status = Column(String(20), nullable=True)        # planned/ongoing/done
-    target_time = Column(Date, nullable=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), unique=True, nullable=False)
+
+    # 第一部分：职业发展方向
+    development_path = Column(String(50), nullable=True)       # 发展序列偏好：专业深耕/管理发展/横向拓展/项目创新
+    short_term_goal = Column(Text, nullable=True)              # 短期目标（1年内）
+    mid_term_goal = Column(Text, nullable=True)                # 中长期目标（2-3年）
+
+    # 第二部分：能力提升与学习需求
+    core_abilities = Column(Text, nullable=True)               # 核心能力提升（多选，JSON 数组字符串）
+    learning_methods = Column(Text, nullable=True)             # 学习方式（多选，JSON 数组字符串）
+    learning_courses = Column(Text, nullable=True)             # 希望学习课程/认证
+
+    # 第三部分：实践机会意向
+    rotation_interest = Column(String(20), nullable=True)      # 是否愿意轮岗借调：是/否
+    rotation_target = Column(String(200), nullable=True)      # 感兴趣部门
+    project_interests = Column(Text, nullable=True)            # 项目参与意向（多选，JSON 数组字符串）
+
+    # 第四部分：其他补充
+    other_comments = Column(Text, nullable=True)               # 其他补充
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    profile = relationship("Profile", back_populates="development_positions")
-
-
-# Step 1 1.3: 发展意向 - 学习方向（多条目）
-class DevelopmentDirection(Base):
-    __tablename__ = "development_direction"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
-    direction_name = Column(String(100), nullable=False)
-    note = Column(Text, nullable=True)
-    status = Column(String(20), nullable=True)
-    target_time = Column(Date, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    profile = relationship("Profile", back_populates="development_directions")
-
-
-# Step 1 1.3: 发展意向 - 职业规划（多条目）
-class DevelopmentPlan(Base):
-    __tablename__ = "development_plan"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
-    plan_content = Column(Text, nullable=False)
-    note = Column(Text, nullable=True)
-    status = Column(String(20), nullable=True)
-    target_time = Column(Date, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    profile = relationship("Profile", back_populates="development_plans")
+    profile = relationship("Profile", back_populates="development_intent")
 
 
 # Step 1 1.4: 项目总结（子表 + 技能标签中间表）

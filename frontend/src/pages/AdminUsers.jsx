@@ -30,6 +30,7 @@ import {
   deleteUser,
   resetPassword,
   batchImportUsers,
+  toggleEmergencyUser,
 } from '../api';
 import { ROLE_OPTIONS } from '../constants';
 import './AdminUsers.css';
@@ -119,6 +120,25 @@ export default function AdminUsers() {
     setModal(null);
   };
 
+  // Step 1 1.1（修订）：切换应急先锋队
+  const handleToggleEmergency = (u) => {
+    const will = !u.is_emergency_staff;
+    Modal.confirm({
+      title: will
+        ? `确定将 ${u.name || u.ehr_no} 标记为应急先锋队成员？`
+        : `确定取消 ${u.name || u.ehr_no} 的应急先锋队标识？`,
+      onOk: async () => {
+        try {
+          await toggleEmergencyUser(u.ehr_no);
+          message.success(will ? '已标记为应急先锋队' : '已取消应急先锋队');
+          load();
+        } catch (err) {
+          setError(err.message);
+        }
+      },
+    });
+  };
+
   const handleImport = async () => {
     if (!importFile) return;
     try {
@@ -153,6 +173,22 @@ export default function AdminUsers() {
           </span>
         );
       },
+    },
+    {
+      title: '应急先锋队',
+      dataIndex: 'is_emergency_staff',
+      key: 'is_emergency_staff',
+      width: 110,
+      render: (v, u) => (
+        <span
+          className={v ? 'emergency-tag-on' : 'emergency-tag-off'}
+          style={{ cursor: 'pointer' }}
+          onClick={() => handleToggleEmergency(u)}
+          title="点击切换"
+        >
+          {v ? '🚨 应急先锋队' : '—'}
+        </span>
+      ),
     },
     {
       title: '状态',
@@ -270,6 +306,18 @@ export default function AdminUsers() {
                     className="filter-select"
                   >
                     {ROLE_OPTIONS.map((o) => <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>)}
+                  </Select>
+                </Col>
+                <Col xs={24} sm={12} md={6} lg={6}>
+                  <Select
+                    placeholder="应急先锋队"
+                    value={filters.is_emergency_staff === undefined ? undefined : (filters.is_emergency_staff ? 'true' : 'false')}
+                    onChange={(v) => setFilters({ ...filters, is_emergency_staff: v === undefined ? undefined : v === 'true' })}
+                    allowClear
+                    className="filter-select"
+                  >
+                    <Select.Option value="true">是（应急先锋队）</Select.Option>
+                    <Select.Option value="false">否（普通员工）</Select.Option>
                   </Select>
                 </Col>
               </Row>

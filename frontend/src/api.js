@@ -111,10 +111,7 @@ const subPaths = {
   achievement: 'achievement',
   language: 'language',
   skillTags: 'skill-tags',
-  // Step 1: 发展意向（3 张子表）+ 项目总结
-  development_position: 'development-position',
-  development_direction: 'development-direction',
-  development_plan: 'development-plan',
+  // Step 1 1.4: 项目总结
   project_summary: 'project-summary',
 };
 
@@ -131,6 +128,15 @@ export async function updateSub(segment, id, body) {
 export async function deleteSub(segment, id) {
   const path = subPaths[segment] || segment;
   return api.delete(`/profile/me/${path}/${id}`);
+}
+
+// 发展意向 1:1（Step 1 1.3 修订版）
+export async function getDevelopmentIntent() {
+  return api.get('/profile/me/development-intent');
+}
+
+export async function saveDevelopmentIntent(body) {
+  return api.put('/profile/me/development-intent', body);
 }
 
 export async function getContact() {
@@ -242,4 +248,13 @@ export async function updateHomeVisit(id, body) {
 
 export async function deleteHomeVisit(id) {
   return api.delete(`/home-visits/${id}`);
+}
+
+// 应急先锋队（Step 1 1.1 修订：管理员/组长可标记）
+export async function toggleEmergencyUser(ehr_no) {
+  return api.post(`/admin/users/${encodeURIComponent(ehr_no)}/toggle-emergency`);
+}
+
+export async function toggleEmergencyProfile(ehr_no) {
+  return api.post(`/profile/admin/${encodeURIComponent(ehr_no)}/toggle-emergency`);
 }

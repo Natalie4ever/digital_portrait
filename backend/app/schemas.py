@@ -62,6 +62,7 @@ class UserResponse(BaseModel):
     group_name: str
     role: str
     is_disabled: bool
+    is_emergency_staff: bool = False
     created_at: datetime
 
     class Config:
@@ -80,6 +81,7 @@ class ProfileListItem(BaseModel):
     role: str
     tags: list[str] = []
     commute_minutes: Optional[int] = None
+    is_emergency_staff: bool = False
 
 
 class ProfileListResponse(BaseModel):
@@ -341,61 +343,29 @@ class SkillTagTemplateResponse(BaseModel):
         from_attributes = True
 
 
-# ====== Step 1 1.3: 发展意向 - 3 张独立子表 ======
-class DevelopmentPositionCreate(BaseModel):
-    position_name: str
-    note: Optional[str] = None
-    status: Optional[str] = None  # planned/ongoing/done
-    target_time: Optional[date] = None
+# ====== Step 1 1.3（修订版）: 发展意向 - 1:1 单表 ======
+class DevelopmentIntentBase(BaseModel):
+    # 第一部分：职业发展方向
+    development_path: Optional[str] = None
+    short_term_goal: Optional[str] = None
+    mid_term_goal: Optional[str] = None
+    # 第二部分：能力提升与学习需求
+    core_abilities: Optional[list[str]] = None    # 多选
+    learning_methods: Optional[list[str]] = None  # 多选
+    learning_courses: Optional[str] = None
+    # 第三部分：实践机会意向
+    rotation_interest: Optional[str] = None       # 是/否
+    rotation_target: Optional[str] = None
+    project_interests: Optional[list[str]] = None  # 多选
+    # 第四部分：其他补充
+    other_comments: Optional[str] = None
 
 
-class DevelopmentPositionUpdate(DevelopmentPositionCreate):
+class DevelopmentIntentUpdate(DevelopmentIntentBase):
     pass
 
 
-class DevelopmentPositionResponse(DevelopmentPositionCreate):
-    id: int
-    profile_id: int
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class DevelopmentDirectionCreate(BaseModel):
-    direction_name: str
-    note: Optional[str] = None
-    status: Optional[str] = None
-    target_time: Optional[date] = None
-
-
-class DevelopmentDirectionUpdate(DevelopmentDirectionCreate):
-    pass
-
-
-class DevelopmentDirectionResponse(DevelopmentDirectionCreate):
-    id: int
-    profile_id: int
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class DevelopmentPlanCreate(BaseModel):
-    plan_content: str
-    note: Optional[str] = None
-    status: Optional[str] = None
-    target_time: Optional[date] = None
-
-
-class DevelopmentPlanUpdate(DevelopmentPlanCreate):
-    pass
-
-
-class DevelopmentPlanResponse(DevelopmentPlanCreate):
+class DevelopmentIntentResponse(DevelopmentIntentBase):
     id: int
     profile_id: int
     created_at: datetime
@@ -458,10 +428,8 @@ class ProfileFullResponse(BaseModel):
     language: list[LanguageInfoResponse] = []
     contact: Optional[ContactInfoResponse] = None
     skill_tags: list[ProfileSkillTagResponse] = []
-    # Step 1: 新增 4 项
-    development_positions: list[DevelopmentPositionResponse] = []
-    development_directions: list[DevelopmentDirectionResponse] = []
-    development_plans: list[DevelopmentPlanResponse] = []
+    # Step 1: 发展意向 1:1 + 项目总结
+    development_intent: Optional[DevelopmentIntentResponse] = None
     project_summaries: list[ProjectSummaryResponse] = []
 
 

@@ -52,12 +52,10 @@ import {
   LANGUAGE_OPTIONS,
   PROFICIENCY_OPTIONS,
   REWARD_TYPE_OPTIONS,
-  // Step 1
-  DEVELOPMENT_POSITION_OPTIONS,
-  DEVELOPMENT_DIRECTION_OPTIONS,
-  DEVELOPMENT_STATUS_OPTIONS,
+  // Step 1 1.4
   PROJECT_ROLE_OPTIONS,
 } from '../constants';
+import DevelopmentIntent from '../components/DevelopmentIntent';
 
 function formatDate(d) {
   if (!d) return '';
@@ -509,66 +507,6 @@ export default function Profile({ ehrOverride }) {
         doDeleteSub={doDeleteSub}
         readOnly={viewingOthers}
       />
-      {/* Step 1 1.3: 发展意向 - 意向岗位 */}
-      <TableSubSection
-        title="发展意向 - 意向岗位"
-        segment="development_position"
-        list={profile.development_positions}
-        formColumns={3}
-        fields={[
-          { key: 'position_name', label: '意向岗位', type: 'select', options: DEVELOPMENT_POSITION_OPTIONS },
-          { key: 'status', label: '状态', type: 'select', options: DEVELOPMENT_STATUS_OPTIONS },
-          { key: 'target_time', label: '目标时间', type: 'date' },
-          { key: 'note', label: '备注', type: 'text' },
-        ]}
-        editing={editingSub}
-        setEditing={setEditingSub}
-        adding={addingSub}
-        setAdding={setAddingSub}
-        saveSub={saveSub}
-        doDeleteSub={doDeleteSub}
-        readOnly={viewingOthers}
-      />
-      {/* Step 1 1.3: 发展意向 - 学习方向 */}
-      <TableSubSection
-        title="发展意向 - 学习方向"
-        segment="development_direction"
-        list={profile.development_directions}
-        formColumns={3}
-        fields={[
-          { key: 'direction_name', label: '学习方向', type: 'select', options: DEVELOPMENT_DIRECTION_OPTIONS },
-          { key: 'status', label: '状态', type: 'select', options: DEVELOPMENT_STATUS_OPTIONS },
-          { key: 'target_time', label: '目标时间', type: 'date' },
-          { key: 'note', label: '备注', type: 'text' },
-        ]}
-        editing={editingSub}
-        setEditing={setEditingSub}
-        adding={addingSub}
-        setAdding={setAddingSub}
-        saveSub={saveSub}
-        doDeleteSub={doDeleteSub}
-        readOnly={viewingOthers}
-      />
-      {/* Step 1 1.3: 发展意向 - 职业规划 */}
-      <TableSubSection
-        title="发展意向 - 职业规划"
-        segment="development_plan"
-        list={profile.development_plans}
-        formColumns={1}
-        fields={[
-          { key: 'plan_content', label: '规划内容', type: 'text' },
-          { key: 'status', label: '状态', type: 'select', options: DEVELOPMENT_STATUS_OPTIONS },
-          { key: 'target_time', label: '目标时间', type: 'date' },
-          { key: 'note', label: '备注', type: 'text' },
-        ]}
-        editing={editingSub}
-        setEditing={setEditingSub}
-        adding={addingSub}
-        setAdding={setAddingSub}
-        saveSub={saveSub}
-        doDeleteSub={doDeleteSub}
-        readOnly={viewingOthers}
-      />
       {/* Step 1 1.4: 项目总结（含技能标签多选） */}
       <ProjectSummarySection
         list={profile.project_summaries}
@@ -707,6 +645,9 @@ export default function Profile({ ehrOverride }) {
           </>
         )}
       </Card>
+
+      {/* Step 1 1.3（修订版）：发展意向 1:1 - 4 个部分折叠面板 - 位置：档案页最下方 */}
+      <DevelopmentIntent readOnly={viewingOthers} />
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Space, Input, Select, Button, Alert, Tag, InputNumber, Row, Col } from 'antd';
+import { Card, Table, Space, Input, Select, Button, Alert, Tag, InputNumber, Row, Col, message, Modal } from 'antd';
 import { SearchOutlined, FilterOutlined, UserOutlined, TeamOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { listProfiles } from '../api';
+import { listProfiles, toggleEmergencyProfile } from '../api';
 import { ROLE_OPTIONS } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import './AdminProfiles.css';
@@ -54,6 +54,25 @@ export default function AdminProfiles() {
 
   useEffect(() => { load(); }, [page, filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Step 1 1.1（修订）：档案管理列表切换应急先锋队
+  const handleToggleEmergency = (row) => {
+    const will = !row.is_emergency_staff;
+    Modal.confirm({
+      title: will
+        ? `确定将 ${row.name || row.ehr_no} 标记为应急先锋队成员？`
+        : `确定取消 ${row.name || row.ehr_no} 的应急先锋队标识？`,
+      onOk: async () => {
+        try {
+          await toggleEmergencyProfile(row.ehr_no);
+          message.success(will ? '已标记为应急先锋队' : '已取消应急先锋队');
+          load();
+        } catch (err) {
+          message.error(err.message);
+        }
+      },
+    });
+  };
+
   const columns = [
     {
       title: 'EHR 号',
@@ -88,6 +107,30 @@ export default function AdminProfiles() {
           </span>
         );
       },
+    },
+    {
+      title: '应急先锋队',
+      dataIndex: 'is_emergency_staff',
+      key: 'is_emergency_staff',
+      width: 110,
+      render: (v, r) => (
+        <span
+          style={{
+            display: 'inline-block',
+            padding: '2px 10px',
+            backgroundColor: v ? '#fff1f0' : 'transparent',
+            color: v ? '#cf1322' : '#999',
+            border: v ? '1px solid #ffa39e' : 'none',
+            borderRadius: 12,
+            fontSize: 12,
+            cursor: 'pointer',
+          }}
+          onClick={() => handleToggleEmergency(r)}
+          title="点击切换"
+        >
+          {v ? '🚨 应急先锋队' : '—'}
+        </span>
+      ),
     },
     {
       title: '标签',
@@ -215,7 +258,19 @@ export default function AdminProfiles() {
                 />
               </div>
             </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
+            <Col xs={24} sm={12} md={8} lg={3}>
+              <Select
+                placeholder="应急先锋队"
+                value={filters.is_emergency_staff === undefined ? undefined : (filters.is_emergency_staff ? 'true' : 'false')}
+                onChange={(v) => setFilters({ ...filters, is_emergency_staff: v === undefined ? undefined : v === 'true' })}
+                allowClear
+                className="filter-select"
+              >
+                <Select.Option value="true">是</Select.Option>
+                <Select.Option value="false">否</Select.Option>
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} md={8} lg={3}>
               <Button type="primary" onClick={load} block icon={<SearchOutlined />} className="search-btn">
                 查询
               </Button>
