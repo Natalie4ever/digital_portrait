@@ -22,6 +22,13 @@ from app.models import (
     LanguageInfo,
     ContactInfo,
     ProfileSkillTag,
+    # Step 1 1.3 / 1.4
+    DevelopmentPosition,
+    DevelopmentDirection,
+    DevelopmentPlan,
+    ProjectSummary,
+    ProjectSummaryTag,
+    SkillTagTemplate,
 )
 from app.schemas import (
     ProfileBaseUpdate,
@@ -57,6 +64,19 @@ from app.schemas import (
     ProfileSkillTagResponse,
     ProfileListResponse,
     ProfileListItem,
+    # Step 1
+    DevelopmentPositionCreate,
+    DevelopmentPositionUpdate,
+    DevelopmentPositionResponse,
+    DevelopmentDirectionCreate,
+    DevelopmentDirectionUpdate,
+    DevelopmentDirectionResponse,
+    DevelopmentPlanCreate,
+    DevelopmentPlanUpdate,
+    DevelopmentPlanResponse,
+    ProjectSummaryCreate,
+    ProjectSummaryUpdate,
+    ProjectSummaryResponse,
 )
 from app.auth import get_current_user, leader_effective_group
 from app.validators import validate_id_number, validate_mobile, validate_phone, validate_date, validate_ehr_no
@@ -239,6 +259,11 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
             selectinload(Profile.language),
             selectinload(Profile.contact),
             selectinload(Profile.skill_tags),
+            # Step 1
+            selectinload(Profile.development_positions),
+            selectinload(Profile.development_directions),
+            selectinload(Profile.development_plans),
+            selectinload(Profile.project_summaries).selectinload(ProjectSummary.tags),
         )
     )
     profile = result.scalar_one_or_none()
@@ -253,6 +278,10 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
     language = []
     contact = None
     skill_tags = []
+    development_positions = []
+    development_directions = []
+    development_plans = []
+    project_summaries = []
     if profile:
         base = ProfileBaseUpdate(
             gender=profile.gender,
@@ -267,6 +296,7 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
             work_start_date=profile.work_start_date,
             hire_date=profile.hire_date,
             marital_status=profile.marital_status,
+            is_emergency_staff=profile.is_emergency_staff,
         )
         political = [PoliticalInfoResponse.model_validate(p) for p in profile.political]
         education = [EducationInfoResponse.model_validate(e) for e in profile.education]
@@ -279,6 +309,39 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
         if profile.contact:
             contact = ContactInfoResponse.model_validate(profile.contact)
         skill_tags = [ProfileSkillTagResponse.model_validate(s) for s in profile.skill_tags]
+        # Step 1 1.3 / 1.4
+        development_positions = [DevelopmentPositionResponse.model_validate(p) for p in profile.development_positions]
+        development_directions = [DevelopmentDirectionResponse.model_validate(d) for d in profile.development_directions]
+        development_plans = [DevelopmentPlanResponse.model_validate(p) for p in profile.development_plans]
+        # 项目总结：批量查标签名避免 lazy load 触发 greenlet 错误
+        all_tag_ids = list({t.tag_id for p in profile.project_summaries for t in p.tags})
+        tag_name_map: dict[int, str] = {}
+        if all_tag_ids:
+            tag_result = await db.execute(
+                select(SkillTagTemplate).where(SkillTagTemplate.id.in_(all_tag_ids))
+            )
+            for t in tag_result.scalars().all():
+                tag_name_map[t.id] = t.name
+        project_summaries_resp: list[ProjectSummaryResponse] = []
+        for p in profile.project_summaries:
+            tag_ids = [t.tag_id for t in p.tags]
+            tag_names = [tag_name_map.get(tid, "") for tid in tag_ids]
+            project_summaries_resp.append(
+                ProjectSummaryResponse(
+                    id=p.id,
+                    profile_id=p.profile_id,
+                    project_name=p.project_name,
+                    start_time=p.start_time,
+                    end_time=p.end_time,
+                    role=p.role,
+                    description=p.description,
+                    tag_ids=tag_ids,
+                    tag_names=tag_names,
+                    created_at=p.created_at,
+                    updated_at=p.updated_at,
+                )
+            )
+        project_summaries = project_summaries_resp
     return ProfileFullResponse(
         user_id=user.id,
         ehr_no=user.ehr_no,
@@ -295,6 +358,10 @@ async def _profile_response(db: AsyncSession, user: User) -> ProfileFullResponse
         language=language,
         contact=contact,
         skill_tags=skill_tags,
+        development_positions=development_positions,
+        development_directions=development_directions,
+        development_plans=development_plans,
+        project_summaries=project_summaries,
     )
 
 
@@ -361,12 +428,17 @@ async def update_profile_base_by_ehr(
 
 # ---------- 政治面貌 CRUD ----------
 async def _resolve_profile_id(db: AsyncSession, current_user: User, ehr_no: Optional[str]) -> tuple[Profile, User]:
+    """
+    解析目标 profile 与 user。
+    - ehr_no 为空：操作 current_user 本人
+    - ehr_no 非空：操作指定用户，需要 _can_access 通过（admin 全权限 / leader 同组 / 本人）
+    """
     if ehr_no:
         target = await _get_target_user(db, ehr_no)
         if not target:
             raise HTTPException(status_code=404, detail="用户不存在")
-        if not _can_access(current_user, target) or current_user.ehr_no != target.ehr_no:
-            raise HTTPException(status_code=403, detail="仅本人可修改自己的档案")
+        if not _can_access(current_user, target):
+            raise HTTPException(status_code=403, detail="无权限操作该用户档案")
         user = target
     else:
         user = current_user
@@ -664,7 +736,13 @@ async def create_qualification_me(
 ):
     profile, _ = await _resolve_profile_id(db, current_user, None)
     obtain_time = validate_date(body.obtain_time) if body.obtain_time else None
-    obj = QualificationInfo(profile_id=profile.id, qualification_name=body.qualification_name, obtain_time=obtain_time)
+    valid_until = validate_date(body.valid_until) if body.valid_until else None
+    obj = QualificationInfo(
+        profile_id=profile.id,
+        qualification_name=body.qualification_name,
+        obtain_time=obtain_time,
+        valid_until=valid_until,
+    )
     db.add(obj)
     await db.flush()
     return QualificationInfoResponse.model_validate(obj)
@@ -683,7 +761,7 @@ async def update_qualification_me(
     if not obj:
         raise HTTPException(status_code=404, detail="记录不存在")
     for k, v in body.model_dump(exclude_unset=True).items():
-        if k == "obtain_time" and v is not None:
+        if k in ("obtain_time", "valid_until") and v is not None:
             v = validate_date(v)
         setattr(obj, k, v)
     db.add(obj)
@@ -916,4 +994,350 @@ async def delete_skill_tag_me(
     if not obj:
         raise HTTPException(status_code=404, detail="记录不存在")
     await db.delete(obj)
+    return {"message": "ok"}
+
+
+# ===================== Step 1 1.3: 发展意向 3 张子表 CRUD =====================
+
+# ----- 意向岗位 -----
+@router.post("/me/development-position", response_model=DevelopmentPositionResponse)
+async def create_development_position_me(
+    body: DevelopmentPositionCreate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    target_time = validate_date(body.target_time) if body.target_time else None
+    obj = DevelopmentPosition(
+        profile_id=profile.id,
+        position_name=body.position_name,
+        note=body.note,
+        status=body.status,
+        target_time=target_time,
+    )
+    db.add(obj)
+    await db.flush()
+    await log_operation(db, current_user.id, "create", "development_position", str(obj.id), None)
+    return DevelopmentPositionResponse.model_validate(obj)
+
+
+@router.put("/me/development-position/{item_id}", response_model=DevelopmentPositionResponse)
+async def update_development_position_me(
+    item_id: int,
+    body: DevelopmentPositionUpdate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(DevelopmentPosition).where(
+            DevelopmentPosition.id == item_id,
+            DevelopmentPosition.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    data = body.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        if k == "target_time" and v is not None:
+            v = validate_date(v)
+        setattr(obj, k, v)
+    db.add(obj)
+    await db.flush()
+    await log_operation(db, current_user.id, "update", "development_position", str(item_id), None)
+    return DevelopmentPositionResponse.model_validate(obj)
+
+
+@router.delete("/me/development-position/{item_id}")
+async def delete_development_position_me(
+    item_id: int,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(DevelopmentPosition).where(
+            DevelopmentPosition.id == item_id,
+            DevelopmentPosition.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    await db.delete(obj)
+    await log_operation(db, current_user.id, "delete", "development_position", str(item_id), None)
+    return {"message": "ok"}
+
+
+# ----- 学习方向 -----
+@router.post("/me/development-direction", response_model=DevelopmentDirectionResponse)
+async def create_development_direction_me(
+    body: DevelopmentDirectionCreate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    target_time = validate_date(body.target_time) if body.target_time else None
+    obj = DevelopmentDirection(
+        profile_id=profile.id,
+        direction_name=body.direction_name,
+        note=body.note,
+        status=body.status,
+        target_time=target_time,
+    )
+    db.add(obj)
+    await db.flush()
+    await log_operation(db, current_user.id, "create", "development_direction", str(obj.id), None)
+    return DevelopmentDirectionResponse.model_validate(obj)
+
+
+@router.put("/me/development-direction/{item_id}", response_model=DevelopmentDirectionResponse)
+async def update_development_direction_me(
+    item_id: int,
+    body: DevelopmentDirectionUpdate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(DevelopmentDirection).where(
+            DevelopmentDirection.id == item_id,
+            DevelopmentDirection.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    data = body.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        if k == "target_time" and v is not None:
+            v = validate_date(v)
+        setattr(obj, k, v)
+    db.add(obj)
+    await db.flush()
+    await log_operation(db, current_user.id, "update", "development_direction", str(item_id), None)
+    return DevelopmentDirectionResponse.model_validate(obj)
+
+
+@router.delete("/me/development-direction/{item_id}")
+async def delete_development_direction_me(
+    item_id: int,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(DevelopmentDirection).where(
+            DevelopmentDirection.id == item_id,
+            DevelopmentDirection.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    await db.delete(obj)
+    await log_operation(db, current_user.id, "delete", "development_direction", str(item_id), None)
+    return {"message": "ok"}
+
+
+# ----- 职业规划 -----
+@router.post("/me/development-plan", response_model=DevelopmentPlanResponse)
+async def create_development_plan_me(
+    body: DevelopmentPlanCreate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    target_time = validate_date(body.target_time) if body.target_time else None
+    obj = DevelopmentPlan(
+        profile_id=profile.id,
+        plan_content=body.plan_content,
+        note=body.note,
+        status=body.status,
+        target_time=target_time,
+    )
+    db.add(obj)
+    await db.flush()
+    await log_operation(db, current_user.id, "create", "development_plan", str(obj.id), None)
+    return DevelopmentPlanResponse.model_validate(obj)
+
+
+@router.put("/me/development-plan/{item_id}", response_model=DevelopmentPlanResponse)
+async def update_development_plan_me(
+    item_id: int,
+    body: DevelopmentPlanUpdate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(DevelopmentPlan).where(
+            DevelopmentPlan.id == item_id,
+            DevelopmentPlan.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    data = body.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        if k == "target_time" and v is not None:
+            v = validate_date(v)
+        setattr(obj, k, v)
+    db.add(obj)
+    await db.flush()
+    await log_operation(db, current_user.id, "update", "development_plan", str(item_id), None)
+    return DevelopmentPlanResponse.model_validate(obj)
+
+
+@router.delete("/me/development-plan/{item_id}")
+async def delete_development_plan_me(
+    item_id: int,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(DevelopmentPlan).where(
+            DevelopmentPlan.id == item_id,
+            DevelopmentPlan.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    await db.delete(obj)
+    await log_operation(db, current_user.id, "delete", "development_plan", str(item_id), None)
+    return {"message": "ok"}
+
+
+# ===================== Step 1 1.4: 项目总结 CRUD（含技能标签多对多） =====================
+
+async def _replace_project_tags(db: AsyncSession, project: ProjectSummary, tag_ids: list[int]) -> None:
+    """替换项目关联的技能标签：先删旧关联再批量插入"""
+    from sqlalchemy import delete as sql_delete
+    await db.execute(
+        sql_delete(ProjectSummaryTag).where(ProjectSummaryTag.project_id == project.id)
+    )
+    for tid in tag_ids:
+        db.add(ProjectSummaryTag(project_id=project.id, tag_id=tid))
+    await db.flush()
+
+
+async def _build_project_response(db: AsyncSession, project: ProjectSummary) -> ProjectSummaryResponse:
+    """加载项目关联的标签，构造响应对象"""
+    result = await db.execute(
+        select(ProjectSummaryTag).where(ProjectSummaryTag.project_id == project.id)
+    )
+    ptags = result.scalars().all()
+    tag_ids = [t.tag_id for t in ptags]
+    tag_names: list[str] = []
+    if tag_ids:
+        tag_result = await db.execute(
+            select(SkillTagTemplate).where(SkillTagTemplate.id.in_(tag_ids))
+        )
+        tags = tag_result.scalars().all()
+        tag_names = [t.name for t in tags]
+    return ProjectSummaryResponse(
+        id=project.id,
+        profile_id=project.profile_id,
+        project_name=project.project_name,
+        start_time=project.start_time,
+        end_time=project.end_time,
+        role=project.role,
+        description=project.description,
+        tag_ids=tag_ids,
+        tag_names=tag_names,
+        created_at=project.created_at,
+        updated_at=project.updated_at,
+    )
+
+
+@router.post("/me/project-summary", response_model=ProjectSummaryResponse)
+async def create_project_summary_me(
+    body: ProjectSummaryCreate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    start_time = validate_date(body.start_time)
+    end_time = validate_date(body.end_time) if body.end_time else None
+    obj = ProjectSummary(
+        profile_id=profile.id,
+        project_name=body.project_name,
+        start_time=start_time,
+        end_time=end_time,
+        role=body.role,
+        description=body.description,
+    )
+    db.add(obj)
+    await db.flush()
+    if body.tag_ids:
+        await _replace_project_tags(db, obj, body.tag_ids)
+    await log_operation(db, current_user.id, "create", "project_summary", str(obj.id), None)
+    return await _build_project_response(db, obj)
+
+
+@router.put("/me/project-summary/{item_id}", response_model=ProjectSummaryResponse)
+async def update_project_summary_me(
+    item_id: int,
+    body: ProjectSummaryUpdate,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(ProjectSummary).where(
+            ProjectSummary.id == item_id,
+            ProjectSummary.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    data = body.model_dump(exclude_unset=True)
+    tag_ids = data.pop("tag_ids", None)
+    for k, v in data.items():
+        if k in ("start_time", "end_time") and v is not None:
+            v = validate_date(v)
+        setattr(obj, k, v)
+    db.add(obj)
+    await db.flush()
+    if tag_ids is not None:
+        await _replace_project_tags(db, obj, tag_ids)
+    await log_operation(db, current_user.id, "update", "project_summary", str(item_id), None)
+    return await _build_project_response(db, obj)
+
+
+@router.delete("/me/project-summary/{item_id}")
+async def delete_project_summary_me(
+    item_id: int,
+    ehr_no: Optional[str] = Query(None, description="目标 EHR（管理员/组长代填时使用）"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile, _ = await _resolve_profile_id(db, current_user, ehr_no)
+    result = await db.execute(
+        select(ProjectSummary).where(
+            ProjectSummary.id == item_id,
+            ProjectSummary.profile_id == profile.id,
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    await db.delete(obj)
+    await log_operation(db, current_user.id, "delete", "project_summary", str(item_id), None)
     return {"message": "ok"}

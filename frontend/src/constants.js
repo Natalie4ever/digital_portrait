@@ -109,3 +109,37 @@ export const ROLE_OPTIONS = [
   { value: 'leader', label: '组长' },
   { value: 'admin', label: '管理员' },
 ];
+
+// Step 1 1.3: 发展意向字典
+export const DEVELOPMENT_POSITION_OPTIONS = [
+  { value: '管理岗', label: '管理岗' },
+  { value: '技术岗', label: '技术岗' },
+  { value: '业务岗', label: '业务岗' },
+  { value: '综合岗', label: '综合岗' },
+  { value: '其他', label: '其他' },
+];
+
+export const DEVELOPMENT_DIRECTION_OPTIONS = [
+  { value: '管理能力', label: '管理能力' },
+  { value: '技术能力', label: '技术能力' },
+  { value: '业务能力', label: '业务能力' },
+  { value: '沟通能力', label: '沟通能力' },
+  { value: '其他', label: '其他' },
+];
+
+export const DEVELOPMENT_STATUS_OPTIONS = [
+  { value: 'planned', label: '计划中' },
+  { value: 'ongoing', label: '进行中' },
+  { value: 'done', label: '已达成' },
+];
+
+// Step 1 1.4: 项目总结字典
+export const PROJECT_ROLE_OPTIONS = [
+  { value: '项目经理', label: '项目经理' },
+  { value: '技术负责人', label: '技术负责人' },
+  { value: '开发', label: '开发' },
+  { value: '测试', label: '测试' },
+  { value: '运维', label: '运维' },
+  { value: '架构师', label: '架构师' },
+  { value: '其他', label: '其他' },
+];

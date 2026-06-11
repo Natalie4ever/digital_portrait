@@ -9,6 +9,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -47,6 +48,8 @@ class Profile(Base):
     work_start_date = Column(Date, nullable=True)
     hire_date = Column(Date, nullable=True)
     marital_status = Column(String(20), nullable=True)
+    # Step 1 1.1: 应急先锋队标识
+    is_emergency_staff = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -61,6 +64,11 @@ class Profile(Base):
     language = relationship("LanguageInfo", back_populates="profile")
     contact = relationship("ContactInfo", back_populates="profile", uselist=False)
     skill_tags = relationship("ProfileSkillTag", back_populates="profile")
+    # Step 1 1.3 + 1.4: 发展意向（三类独立子表）+ 项目总结
+    development_positions = relationship("DevelopmentPosition", back_populates="profile", cascade="all, delete-orphan")
+    development_directions = relationship("DevelopmentDirection", back_populates="profile", cascade="all, delete-orphan")
+    development_plans = relationship("DevelopmentPlan", back_populates="profile", cascade="all, delete-orphan")
+    project_summaries = relationship("ProjectSummary", back_populates="profile", cascade="all, delete-orphan")
 
 
 class PoliticalInfo(Base):
@@ -142,6 +150,8 @@ class QualificationInfo(Base):
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     qualification_name = Column(String(200), nullable=True)
     obtain_time = Column(Date, nullable=True)
+    # Step 1 1.2: 证书有效期
+    valid_until = Column(Date, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     profile = relationship("Profile", back_populates="qualification")
@@ -183,6 +193,74 @@ class ContactInfo(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     profile = relationship("Profile", back_populates="contact")
+
+
+# Step 1 1.3: 发展意向 - 意向岗位（多条目）
+class DevelopmentPosition(Base):
+    __tablename__ = "development_position"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    position_name = Column(String(100), nullable=False)
+    note = Column(Text, nullable=True)
+    status = Column(String(20), nullable=True)        # planned/ongoing/done
+    target_time = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    profile = relationship("Profile", back_populates="development_positions")
+
+
+# Step 1 1.3: 发展意向 - 学习方向（多条目）
+class DevelopmentDirection(Base):
+    __tablename__ = "development_direction"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    direction_name = Column(String(100), nullable=False)
+    note = Column(Text, nullable=True)
+    status = Column(String(20), nullable=True)
+    target_time = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    profile = relationship("Profile", back_populates="development_directions")
+
+
+# Step 1 1.3: 发展意向 - 职业规划（多条目）
+class DevelopmentPlan(Base):
+    __tablename__ = "development_plan"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    plan_content = Column(Text, nullable=False)
+    note = Column(Text, nullable=True)
+    status = Column(String(20), nullable=True)
+    target_time = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    profile = relationship("Profile", back_populates="development_plans")
+
+
+# Step 1 1.4: 项目总结（子表 + 技能标签中间表）
+class ProjectSummary(Base):
+    __tablename__ = "project_summary"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    project_name = Column(String(200), nullable=False)
+    start_time = Column(Date, nullable=False)
+    end_time = Column(Date, nullable=True)
+    role = Column(String(100), nullable=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    profile = relationship("Profile", back_populates="project_summaries")
+    tags = relationship("ProjectSummaryTag", back_populates="project", cascade="all, delete-orphan")
+
+
+class ProjectSummaryTag(Base):
+    __tablename__ = "project_summary_tags"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("project_summary.id", ondelete="CASCADE"), nullable=False)
+    tag_id = Column(Integer, ForeignKey("skill_tag_templates.id", ondelete="CASCADE"), nullable=False)
+    project = relationship("ProjectSummary", back_populates="tags")
+    tag = relationship("SkillTagTemplate")
+    __table_args__ = (UniqueConstraint("project_id", "tag_id", name="uq_project_tag"),)
 
 
 # 预定义技能标签

@@ -101,6 +101,8 @@ class ProfileBaseUpdate(BaseModel):
     work_start_date: Optional[date] = None
     hire_date: Optional[date] = None
     marital_status: Optional[str] = None
+    # Step 1 1.1: 应急先锋队标识
+    is_emergency_staff: Optional[bool] = None
 
 
 # ----- 政治面貌 -----
@@ -225,6 +227,8 @@ class RewardInfoResponse(RewardInfoCreate):
 class QualificationInfoCreate(BaseModel):
     qualification_name: Optional[str] = None
     obtain_time: Optional[date] = None
+    # Step 1 1.2: 证书有效期（可选）
+    valid_until: Optional[date] = None
 
 
 class QualificationInfoUpdate(QualificationInfoCreate):
@@ -337,6 +341,106 @@ class SkillTagTemplateResponse(BaseModel):
         from_attributes = True
 
 
+# ====== Step 1 1.3: 发展意向 - 3 张独立子表 ======
+class DevelopmentPositionCreate(BaseModel):
+    position_name: str
+    note: Optional[str] = None
+    status: Optional[str] = None  # planned/ongoing/done
+    target_time: Optional[date] = None
+
+
+class DevelopmentPositionUpdate(DevelopmentPositionCreate):
+    pass
+
+
+class DevelopmentPositionResponse(DevelopmentPositionCreate):
+    id: int
+    profile_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DevelopmentDirectionCreate(BaseModel):
+    direction_name: str
+    note: Optional[str] = None
+    status: Optional[str] = None
+    target_time: Optional[date] = None
+
+
+class DevelopmentDirectionUpdate(DevelopmentDirectionCreate):
+    pass
+
+
+class DevelopmentDirectionResponse(DevelopmentDirectionCreate):
+    id: int
+    profile_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DevelopmentPlanCreate(BaseModel):
+    plan_content: str
+    note: Optional[str] = None
+    status: Optional[str] = None
+    target_time: Optional[date] = None
+
+
+class DevelopmentPlanUpdate(DevelopmentPlanCreate):
+    pass
+
+
+class DevelopmentPlanResponse(DevelopmentPlanCreate):
+    id: int
+    profile_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ====== Step 1 1.4: 项目总结（子表 + 标签中间表）======
+class ProjectSummaryCreate(BaseModel):
+    project_name: str
+    start_time: date
+    end_time: Optional[date] = None
+    role: Optional[str] = None
+    description: Optional[str] = None
+    tag_ids: Optional[list[int]] = None  # 多对多关联 skill_tag_templates.id
+
+
+class ProjectSummaryUpdate(BaseModel):
+    project_name: Optional[str] = None
+    start_time: Optional[date] = None
+    end_time: Optional[date] = None
+    role: Optional[str] = None
+    description: Optional[str] = None
+    tag_ids: Optional[list[int]] = None
+
+
+class ProjectSummaryResponse(BaseModel):
+    id: int
+    profile_id: int
+    project_name: str
+    start_time: date
+    end_time: Optional[date] = None
+    role: Optional[str] = None
+    description: Optional[str] = None
+    tag_ids: list[int] = []  # 关联的技能标签 id 列表
+    tag_names: list[str] = []  # 关联的技能标签名称列表（便于前端展示）
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # ----- 档案完整响应 -----
 class ProfileFullResponse(BaseModel):
     user_id: int
@@ -354,6 +458,11 @@ class ProfileFullResponse(BaseModel):
     language: list[LanguageInfoResponse] = []
     contact: Optional[ContactInfoResponse] = None
     skill_tags: list[ProfileSkillTagResponse] = []
+    # Step 1: 新增 4 项
+    development_positions: list[DevelopmentPositionResponse] = []
+    development_directions: list[DevelopmentDirectionResponse] = []
+    development_plans: list[DevelopmentPlanResponse] = []
+    project_summaries: list[ProjectSummaryResponse] = []
 
 
 # ----- 操作日志 -----

@@ -111,6 +111,11 @@ const subPaths = {
   achievement: 'achievement',
   language: 'language',
   skillTags: 'skill-tags',
+  // Step 1: 发展意向（3 张子表）+ 项目总结
+  development_position: 'development-position',
+  development_direction: 'development-direction',
+  development_plan: 'development-plan',
+  project_summary: 'project-summary',
 };
 
 export async function createSub(segment, body) {

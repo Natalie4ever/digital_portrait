@@ -18,6 +18,7 @@ import {
   Descriptions,
   Table,
   Timeline,
+  Switch,
 } from 'antd';
 import dayjs from 'dayjs';
 import {
@@ -51,6 +52,11 @@ import {
   LANGUAGE_OPTIONS,
   PROFICIENCY_OPTIONS,
   REWARD_TYPE_OPTIONS,
+  // Step 1
+  DEVELOPMENT_POSITION_OPTIONS,
+  DEVELOPMENT_DIRECTION_OPTIONS,
+  DEVELOPMENT_STATUS_OPTIONS,
+  PROJECT_ROLE_OPTIONS,
 } from '../constants';
 
 function formatDate(d) {
@@ -494,7 +500,79 @@ export default function Profile({ ehrOverride }) {
         segment="qualification"
         list={profile.qualification}
         formColumns={3}
-        fields={[{ key: 'qualification_name', label: '资格名称', type: 'text' }, { key: 'obtain_time', label: '取得时间', type: 'date' }]}
+        fields={[{ key: 'qualification_name', label: '资格名称', type: 'text' }, { key: 'obtain_time', label: '取得时间', type: 'date' }, { key: 'valid_until', label: '有效期', type: 'date' }]}
+        editing={editingSub}
+        setEditing={setEditingSub}
+        adding={addingSub}
+        setAdding={setAddingSub}
+        saveSub={saveSub}
+        doDeleteSub={doDeleteSub}
+        readOnly={viewingOthers}
+      />
+      {/* Step 1 1.3: 发展意向 - 意向岗位 */}
+      <TableSubSection
+        title="发展意向 - 意向岗位"
+        segment="development_position"
+        list={profile.development_positions}
+        formColumns={3}
+        fields={[
+          { key: 'position_name', label: '意向岗位', type: 'select', options: DEVELOPMENT_POSITION_OPTIONS },
+          { key: 'status', label: '状态', type: 'select', options: DEVELOPMENT_STATUS_OPTIONS },
+          { key: 'target_time', label: '目标时间', type: 'date' },
+          { key: 'note', label: '备注', type: 'text' },
+        ]}
+        editing={editingSub}
+        setEditing={setEditingSub}
+        adding={addingSub}
+        setAdding={setAddingSub}
+        saveSub={saveSub}
+        doDeleteSub={doDeleteSub}
+        readOnly={viewingOthers}
+      />
+      {/* Step 1 1.3: 发展意向 - 学习方向 */}
+      <TableSubSection
+        title="发展意向 - 学习方向"
+        segment="development_direction"
+        list={profile.development_directions}
+        formColumns={3}
+        fields={[
+          { key: 'direction_name', label: '学习方向', type: 'select', options: DEVELOPMENT_DIRECTION_OPTIONS },
+          { key: 'status', label: '状态', type: 'select', options: DEVELOPMENT_STATUS_OPTIONS },
+          { key: 'target_time', label: '目标时间', type: 'date' },
+          { key: 'note', label: '备注', type: 'text' },
+        ]}
+        editing={editingSub}
+        setEditing={setEditingSub}
+        adding={addingSub}
+        setAdding={setAddingSub}
+        saveSub={saveSub}
+        doDeleteSub={doDeleteSub}
+        readOnly={viewingOthers}
+      />
+      {/* Step 1 1.3: 发展意向 - 职业规划 */}
+      <TableSubSection
+        title="发展意向 - 职业规划"
+        segment="development_plan"
+        list={profile.development_plans}
+        formColumns={1}
+        fields={[
+          { key: 'plan_content', label: '规划内容', type: 'text' },
+          { key: 'status', label: '状态', type: 'select', options: DEVELOPMENT_STATUS_OPTIONS },
+          { key: 'target_time', label: '目标时间', type: 'date' },
+          { key: 'note', label: '备注', type: 'text' },
+        ]}
+        editing={editingSub}
+        setEditing={setEditingSub}
+        adding={addingSub}
+        setAdding={setAddingSub}
+        saveSub={saveSub}
+        doDeleteSub={doDeleteSub}
+        readOnly={viewingOthers}
+      />
+      {/* Step 1 1.4: 项目总结（含技能标签多选） */}
+      <ProjectSummarySection
+        list={profile.project_summaries}
+        templates={templates}
         editing={editingSub}
         setEditing={setEditingSub}
         adding={addingSub}
@@ -548,6 +626,29 @@ export default function Profile({ ehrOverride }) {
                 children: contact[k] != null && contact[k] !== '' ? contact[k] : '—',
               }))}
             />
+            {/* Step 1 1.1: 应急先锋队标识 */}
+            <div style={{ marginBottom: 16, padding: '8px 16px', backgroundColor: '#fafafa', borderRadius: 4 }}>
+              <Space>
+                <span style={{ width: 100, color: '#666' }}>应急先锋队</span>
+                <Switch
+                  checked={!!profile?.base?.is_emergency_staff}
+                  checkedChildren="已加入"
+                  unCheckedChildren="未加入"
+                  onChange={async (checked) => {
+                    try {
+                      await updateProfileBase({ is_emergency_staff: checked });
+                      message.success(checked ? '已加入应急先锋队' : '已退出应急先锋队');
+                      await loadSilent();
+                    } catch (e) {
+                      message.error(e.message);
+                    }
+                  }}
+                />
+                <span style={{ color: '#999', fontSize: 12 }}>
+                  开启后可在「应急响应」场景中被快速检索
+                </span>
+              </Space>
+            </div>
             <Button type="primary" onClick={() => setContactEdit(true)}>编辑</Button>
           </>
         ) : !viewingOthers ? (
@@ -560,21 +661,50 @@ export default function Profile({ ehrOverride }) {
               <Col span={8}><Form.Item name="email" label="邮箱"><Input /></Form.Item></Col>
               <Col span={4}><Form.Item name="commute_minutes" label="通勤时间(分钟)"><Input type="number" /></Form.Item></Col>
             </Row>
+            {/* Step 1 1.1: 应急先锋队 - 在编辑模式也展示 */}
+            <div style={{ marginBottom: 16, padding: '8px 16px', backgroundColor: '#fafafa', borderRadius: 4 }}>
+              <Form.Item label="应急先锋队标识" style={{ marginBottom: 0 }}>
+                <Switch
+                  checked={!!profile?.base?.is_emergency_staff}
+                  checkedChildren="已加入"
+                  unCheckedChildren="未加入"
+                  onChange={async (checked) => {
+                    try {
+                      await updateProfileBase({ is_emergency_staff: checked });
+                      message.success(checked ? '已加入应急先锋队' : '已退出应急先锋队');
+                      await loadSilent();
+                    } catch (e) {
+                      message.error(e.message);
+                    }
+                  }}
+                />
+              </Form.Item>
+            </div>
             <Space><Button type="primary" htmlType="submit">保存</Button><Button onClick={() => setContactEdit(null)}>取消</Button></Space>
           </Form>
         ) : (
-          <Descriptions
-            column={2}
-            bordered
-            size="small"
-            labelStyle={{ width: 100, backgroundColor: '#fafafa' }}
-            style={{ marginBottom: 0 }}
-            items={['mobile', 'office_phone', 'home_phone', 'home_address', 'email', 'commute_minutes'].map((k) => ({
-              key: k,
-              label: CONTACT_LABELS[k],
-              children: contact[k] != null && contact[k] !== '' ? contact[k] : '—',
-            }))}
-          />
+          <>
+            <Descriptions
+              column={2}
+              bordered
+              size="small"
+              labelStyle={{ width: 100, backgroundColor: '#fafafa' }}
+              style={{ marginBottom: 0 }}
+              items={['mobile', 'office_phone', 'home_phone', 'home_address', 'email', 'commute_minutes'].map((k) => ({
+                key: k,
+                label: CONTACT_LABELS[k],
+                children: contact[k] != null && contact[k] !== '' ? contact[k] : '—',
+              }))}
+            />
+            <div style={{ marginTop: 16, padding: '8px 16px', backgroundColor: '#fafafa', borderRadius: 4 }}>
+              <Space>
+                <span style={{ width: 100, color: '#666' }}>应急先锋队</span>
+                <Tag color={profile?.base?.is_emergency_staff ? 'red' : 'default'}>
+                  {profile?.base?.is_emergency_staff ? '已加入' : '未加入'}
+                </Tag>
+              </Space>
+            </div>
+          </>
         )}
       </Card>
     </div>
@@ -759,6 +889,127 @@ function TableSubSection({ title, segment, list, fields, tableFields, formColumn
                 </Form.Item>
               ))
             )}
+          </Form>
+        </Modal>
+      )}
+    </Card>
+  );
+}
+
+// Step 1 1.4: 项目总结（含技能标签多对多）
+function ProjectSummarySection({ list, templates, editing, setEditing, adding, setAdding, saveSub, doDeleteSub, readOnly }) {
+  const segment = 'project_summary';
+  const isAdding = adding === segment;
+  const edit = editing.segment === segment ? editing : null;
+  const [form] = Form.useForm();
+  const tagOptions = (templates || []).map((t) => ({ value: t.id, label: t.name }));
+
+  const openAdd = () => { setAdding(segment); form.resetFields(); };
+  const openEdit = (item) => {
+    setEditing({ segment, id: item.id, data: { ...item } });
+    form.setFieldsValue({
+      project_name: item.project_name,
+      start_time: item.start_time ? dayjs(item.start_time) : null,
+      end_time: item.end_time ? dayjs(item.end_time) : null,
+      role: item.role,
+      description: item.description,
+      tag_ids: item.tag_ids || [],
+    });
+  };
+  const cancel = () => { setAdding(null); setEditing({ segment: null, id: null, data: null }); };
+  const submit = async (values) => {
+    const body = {
+      project_name: values.project_name,
+      start_time: values.start_time?.format?.('YYYY-MM-DD'),
+      end_time: values.end_time?.format?.('YYYY-MM-DD') || null,
+      role: values.role || null,
+      description: values.description || null,
+      tag_ids: values.tag_ids || [],
+    };
+    saveSub(segment, edit?.id, body);
+  };
+
+  const columns = [
+    { title: '项目名', dataIndex: 'project_name', key: 'project_name', ellipsis: true },
+    { title: '开始时间', dataIndex: 'start_time', key: 'start_time', render: (v) => formatDate(v) || '—' },
+    { title: '结束时间', dataIndex: 'end_time', key: 'end_time', render: (v) => formatDate(v) || '—' },
+    { title: '角色', dataIndex: 'role', key: 'role' },
+    {
+      title: '关联技能',
+      dataIndex: 'tag_names',
+      key: 'tag_names',
+      render: (names) => (names && names.length > 0
+        ? names.map((n) => <Tag key={n} color="blue">{n}</Tag>)
+        : '—'),
+    },
+    ...(!readOnly ? [{
+      title: '操作',
+      key: 'action',
+      width: 120,
+      render: (_, record) => (
+        <Space>
+          <Button type="link" size="small" onClick={() => openEdit(record)}>编辑</Button>
+          <Button type="link" size="small" danger onClick={() => doDeleteSub(segment, record.id)}>删除</Button>
+        </Space>
+      ),
+    }] : []),
+  ];
+
+  return (
+    <Card title="项目总结" style={{ marginBottom: 16 }}>
+      <Table
+        dataSource={list || []}
+        columns={columns}
+        rowKey="id"
+        pagination={false}
+        size="small"
+        scroll={{ x: 'max-content' }}
+        style={{ marginBottom: 16, width: '100%' }}
+      />
+      {!readOnly && !edit && !isAdding && <Button block onClick={openAdd} style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>新增</Button>}
+      {!readOnly && (
+        <Modal
+          title={isAdding ? '新增项目总结' : '编辑项目总结'}
+          open={!!edit || isAdding}
+          onOk={() => form.submit()}
+          onCancel={cancel}
+          okText="确定"
+          cancelText="取消"
+          destroyOnClose
+          width={720}
+        >
+          <Form form={form} layout="vertical" onFinish={submit}>
+            <Form.Item name="project_name" label="项目名" rules={[{ required: true, message: '请输入项目名' }]}>
+              <Input placeholder="如：员工数字画像系统" />
+            </Form.Item>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="start_time" label="开始时间" rules={[{ required: true, message: '请选择开始时间' }]}>
+                  <DatePicker style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="end_time" label="结束时间（可空=进行中）">
+                  <DatePicker style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item name="role" label="项目角色">
+              <Select options={PROJECT_ROLE_OPTIONS} allowClear placeholder="请选择" />
+            </Form.Item>
+            <Form.Item name="description" label="项目描述">
+              <Input.TextArea rows={3} placeholder="项目目标、关键技术、个人贡献等" />
+            </Form.Item>
+            <Form.Item name="tag_ids" label="关联技能标签">
+              <Select
+                mode="multiple"
+                options={tagOptions}
+                placeholder="从技能标签库选择（可多选）"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+              />
+            </Form.Item>
           </Form>
         </Modal>
       )}
