@@ -15,6 +15,10 @@ import AdminProfileView from './pages/AdminProfileView';
 import HomeVisits from './pages/HomeVisits';
 import HomeVisitForm from './pages/HomeVisitForm';
 import HomeVisitDetail from './pages/HomeVisitDetail';
+import AdminGroupTransfers from './pages/AdminGroupTransfers';
+import AdminGroupTransferForm from './pages/AdminGroupTransferForm';
+import AdminScenarios from './pages/AdminScenarios';
+import AdminAnalytics from './pages/AdminAnalytics';
 
 function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
@@ -48,6 +52,13 @@ function AppRoutes() {
         <Route path="admin/profile-view/:ehr_no" element={<PrivateRoute><AdminProfileView /></PrivateRoute>} />
         <Route path="admin/logs" element={<PrivateRoute adminOnly><AdminLogs /></PrivateRoute>} />
         <Route path="admin/skill-tags" element={<PrivateRoute adminOnly><AdminSkillTags /></PrivateRoute>} />
+        {/* Step 2: 组员调换 */}
+        <Route path="admin/group-transfers" element={<PrivateRoute adminOnly><AdminGroupTransfers /></PrivateRoute>} />
+        <Route path="admin/group-transfer-form" element={<PrivateRoute adminOnly><AdminGroupTransferForm /></PrivateRoute>} />
+        {/* Step 3: 智能筛选场景 */}
+        <Route path="admin/scenarios" element={<PrivateRoute><AdminScenarios /></PrivateRoute>} />
+        {/* Step 4: 团队能力分析 */}
+        <Route path="admin/analytics" element={<PrivateRoute><AdminAnalytics /></PrivateRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

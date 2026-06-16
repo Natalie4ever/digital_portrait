@@ -258,3 +258,138 @@ export async function toggleEmergencyUser(ehr_no) {
 export async function toggleEmergencyProfile(ehr_no) {
   return api.post(`/profile/admin/${encodeURIComponent(ehr_no)}/toggle-emergency`);
 }
+
+// 组员调换（Step 2）
+export async function transferUser(body) {
+  return api.post('/admin/group-transfers/transfer', body);
+}
+
+export async function listGroupTransfers(params = {}) {
+  const cleaned = Object.fromEntries(
+    Object.entries(params || {}).filter(([, v]) => v !== undefined && v !== null && v !== '')
+  );
+  const q = new URLSearchParams(cleaned).toString();
+  return api.get('/admin/group-transfers' + (q ? '?' + q : ''));
+}
+
+export async function getUserTransferHistory(ehr_no) {
+  return api.get(`/admin/group-transfers/user/${encodeURIComponent(ehr_no)}`);
+}
+
+export async function listGroups() {
+  return api.get('/admin/group-transfers/groups');
+}
+
+// Step 3: 智能筛选场景
+export async function scenarioSearch(body) {
+  return api.post('/admin/scenarios/search', body);
+}
+
+export async function scenarioExport(body) {
+  // 导出 Excel：fetch + blob 下载
+  const token = getToken();
+  const res = await fetch(BASE + '/admin/scenarios/export', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) {
+    clearToken();
+    window.location.href = '/login';
+    throw new Error('登录已过期');
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || '导出失败');
+  }
+  // 解析文件名（优先用 RFC 5987 编码的中文名）
+  const dispo = res.headers.get('content-disposition') || '';
+  let filename = 'scenario.xlsx';
+  const starMatch = dispo.match(/filename\*=UTF-8''([^;]+)/i);
+  if (starMatch) {
+    try {
+      filename = decodeURIComponent(starMatch[1]);
+    } catch (e) {
+      const basic = dispo.match(/filename="([^"]+)"/);
+      if (basic) filename = basic[1];
+    }
+  } else {
+    const basic = dispo.match(/filename="([^"]+)"/);
+    if (basic) filename = basic[1];
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return { filename };
+}
+
+// Step 4: 团队能力分析
+export async function analyticsOverview() {
+  return api.post('/admin/analytics/overview', {});
+}
+
+export async function analyticsCertificates() {
+  return api.post('/admin/analytics/certificates', {});
+}
+
+export async function analyticsRisks() {
+  return api.post('/admin/analytics/risks', {});
+}
+
+export async function analyticsEmergency() {
+  return api.post('/admin/analytics/emergency', {});
+}
+
+export async function analyticsExport() {
+  const token = getToken();
+  const res = await fetch(BASE + '/admin/analytics/export', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({}),
+  });
+  if (res.status === 401) {
+    clearToken();
+    window.location.href = '/login';
+    throw new Error('登录已过期');
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || '导出失败');
+  }
+  const dispo = res.headers.get('content-disposition') || '';
+  let filename = 'analytics.xlsx';
+  const starMatch = dispo.match(/filename\*=UTF-8''([^;]+)/i);
+  if (starMatch) {
+    try {
+      filename = decodeURIComponent(starMatch[1]);
+    } catch (e) {
+      const basic = dispo.match(/filename="([^"]+)"/);
+      if (basic) filename = basic[1];
+    }
+  } else {
+    const basic = dispo.match(/filename="([^"]+)"/);
+    if (basic) filename = basic[1];
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return { filename };
+}

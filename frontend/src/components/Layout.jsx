@@ -13,7 +13,8 @@ import {
   TeamOutlined,
   HistoryOutlined,
   TagsOutlined,
-  HomeFilled
+  HomeFilled,
+  SwapOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
@@ -73,8 +74,12 @@ export default function Layout() {
         label: '管理功能',
         children: [
           { key: '/admin/profiles', label: <Link to="/admin/profiles">档案管理</Link> },
+          { key: '/admin/scenarios', label: <Link to="/admin/scenarios">智能筛选</Link> },
+          { key: '/admin/analytics', label: <Link to="/admin/analytics">能力分析</Link> },
           ...(user.role === 'admin' ? [
             { key: '/admin/users', label: <Link to="/admin/users">用户管理</Link> },
+            { key: '/admin/group-transfer-form', label: <Link to="/admin/group-transfer-form">组员调换</Link> },
+            { key: '/admin/group-transfers', label: <Link to="/admin/group-transfers">调换历史</Link> },
             { key: '/admin/logs', label: <Link to="/admin/logs">操作日志</Link> },
             { key: '/admin/skill-tags', label: <Link to="/admin/skill-tags">技能标签</Link> },
           ] : []),

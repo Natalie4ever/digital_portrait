@@ -326,3 +326,25 @@ class HomeVisitRecord(Base):
 
     visited_user = relationship("User", foreign_keys=[visited_user_id])
     visitor_user = relationship("User", foreign_keys=[visitor_user_id])
+
+
+# ====== Step 2: 组员调换历史表 ======
+class GroupTransferHistory(Base):
+    """记录员工每次组别调换：调入时间、离开时间、操作人等。leave_date IS NULL 表示当前仍在该组。"""
+    __tablename__ = "group_transfer_history"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    ehr_no = Column(String(50), nullable=False, index=True)
+    from_group = Column(String(100), nullable=True)        # 调离组别（首条为 NULL）
+    to_group = Column(String(100), nullable=False)         # 调入组别
+    transfer_date = Column(DateTime, nullable=False)        # 加入新组的时间
+    leave_date = Column(DateTime, nullable=True, index=True)  # 离开时间（NULL=当前仍在该组）
+    operator_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    operator_ehr_no = Column(String(50), nullable=False)   # 冗余便于历史快照
+    operator_name = Column(String(100), nullable=False)    # 冗余便于历史快照
+    reason = Column(String(500), nullable=True)            # 调组原因
+    remark = Column(String(500), nullable=True)            # 备注
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])
+    operator = relationship("User", foreign_keys=[operator_user_id])

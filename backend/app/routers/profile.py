@@ -27,6 +27,8 @@ from app.models import (
     ProjectSummary,
     ProjectSummaryTag,
     SkillTagTemplate,
+    # Step 2
+    GroupTransferHistory,
 )
 from app.schemas import (
     ProfileBaseUpdate,
@@ -76,17 +78,41 @@ from app.operation_log import log_operation
 router = APIRouter(prefix="/api/profile", tags=["个人档案"])
 
 
+async def _leader_can_access(db: AsyncSession, viewer: User, target: User) -> bool:
+    """Step 2: 组长判定 — 基于调换历史 leave_date IS NULL"""
+    lg = leader_effective_group(viewer)
+    if not lg:
+        return False
+    r = await db.execute(
+        select(GroupTransferHistory)
+        .where(
+            GroupTransferHistory.user_id == target.id,
+            GroupTransferHistory.leave_date.is_(None),
+        )
+    )
+    active = r.scalar_one_or_none()
+    if not active:
+        return False
+    return (active.to_group or "").strip() == lg
+
+
 def _can_access(viewer: User, target: User) -> bool:
+    """同步部分：admin / 本人判定（不需 DB）。组长判定需走 async 版本 _can_access_with_db"""
     if viewer.role == "admin":
         return True
-    if viewer.role == "leader":
-        vg = leader_effective_group(viewer)
-        if not vg:
-            return False
-        tg = (target.group_name or "").strip()
-        return vg == tg
     if viewer.ehr_no == target.ehr_no:
         return True
+    return False  # 组长情况交给 _can_access_with_db 判定
+
+
+async def _can_access_with_db(db: AsyncSession, viewer: User, target: User) -> bool:
+    """Step 2: 完整 ACL：admin 全通 / leader 查历史 / 本人"""
+    if viewer.role == "admin":
+        return True
+    if viewer.ehr_no == target.ehr_no:
+        return True
+    if viewer.role == "leader":
+        return await _leader_can_access(db, viewer, target)
     return False
 
 
@@ -129,7 +155,7 @@ async def get_profile_by_ehr(
     target = await _get_target_user(db, ehr_no)
     if not target:
         raise HTTPException(status_code=404, detail="用户不存在")
-    if not _can_access(current_user, target):
+    if not await _can_access_with_db(db, current_user, target):
         raise HTTPException(status_code=403, detail="无权限查看该用户档案")
     return await _profile_response(db, target)
 
@@ -463,7 +489,7 @@ async def update_profile_base_by_ehr(
     target = await _get_target_user(db, ehr_no)
     if not target:
         raise HTTPException(status_code=404, detail="用户不存在")
-    if not _can_access(current_user, target) or current_user.ehr_no != target.ehr_no:
+    if not await _can_access_with_db(db, current_user, target) or current_user.ehr_no != target.ehr_no:
         raise HTTPException(status_code=403, detail="仅本人可修改自己的基础信息")
     profile = await _get_or_create_profile(db, target.id)
     data = body.model_dump(exclude_unset=True)
@@ -495,7 +521,7 @@ async def _resolve_profile_id(db: AsyncSession, current_user: User, ehr_no: Opti
         target = await _get_target_user(db, ehr_no)
         if not target:
             raise HTTPException(status_code=404, detail="用户不存在")
-        if not _can_access(current_user, target):
+        if not await _can_access_with_db(db, current_user, target):
             raise HTTPException(status_code=403, detail="无权限操作该用户档案")
         user = target
     else:

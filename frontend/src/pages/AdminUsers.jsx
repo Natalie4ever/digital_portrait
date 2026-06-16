@@ -33,6 +33,7 @@ import {
   toggleEmergencyUser,
 } from '../api';
 import { ROLE_OPTIONS } from '../constants';
+import GroupTransferModal from '../components/GroupTransferModal';
 import './AdminUsers.css';
 
 const ROLE_MAP = { user: '普通用户', leader: '组长', admin: '管理员' };
@@ -139,6 +140,15 @@ export default function AdminUsers() {
     });
   };
 
+  // Step 2：调组
+  const [transferTarget, setTransferTarget] = useState(null);
+  const openTransfer = (u) => setTransferTarget(u);
+  const closeTransfer = () => setTransferTarget(null);
+  const onTransferSuccess = () => {
+    closeTransfer();
+    load();
+  };
+
   const handleImport = async () => {
     if (!importFile) return;
     try {
@@ -215,11 +225,19 @@ export default function AdminUsers() {
     {
       title: '操作',
       key: 'action',
-      width: 230,
+      width: 280,
       fixed: 'right',
       render: (_, u) => (
         <Space>
           <Button type="link" size="small" onClick={() => setModal({ type: 'edit', data: u })}>编辑</Button>
+          <Button
+            type="link"
+            size="small"
+            className="action-transfer-link"
+            onClick={() => openTransfer(u)}
+          >
+            调组
+          </Button>
           <Button type="link" size="small" onClick={() => setModal({ type: 'resetPwd', data: u })}>重置密码</Button>
           <Button
             type="link"
@@ -383,6 +401,13 @@ export default function AdminUsers() {
           )}
         </Modal>
       )}
+      {/* Step 2: 调组弹窗 */}
+      <GroupTransferModal
+        open={!!transferTarget}
+        user={transferTarget}
+        onCancel={closeTransfer}
+        onSuccess={onTransferSuccess}
+      />
     </div>
   );
 }

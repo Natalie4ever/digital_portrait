@@ -570,3 +570,168 @@ class HomeVisitRecordDetailResponse(BaseModel):
 class HomeVisitRecordListResponse(BaseModel):
     total: int
     items: list[HomeVisitRecordListItem]
+
+
+# ====== Step 2: 组员调换历史 ======
+class GroupTransferRequest(BaseModel):
+    ehr_no: str
+    to_group: str
+    transfer_date: Optional[datetime] = None  # 默认 = 当前时间
+    reason: Optional[str] = None
+    remark: Optional[str] = None
+
+    @field_validator("ehr_no")
+    @classmethod
+    def ehr_no_seven_digits(cls, v: str) -> str:
+        return _validate_ehr_no(v)
+
+
+class GroupTransferResponse(BaseModel):
+    id: int
+    user_id: int
+    ehr_no: str
+    user_name: Optional[str] = None
+    from_group: Optional[str] = None
+    to_group: str
+    transfer_date: datetime
+    leave_date: Optional[datetime] = None
+    operator_user_id: int
+    operator_ehr_no: str
+    operator_name: str
+    reason: Optional[str] = None
+    remark: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GroupTransferListItem(BaseModel):
+    """列表项：合并员工姓名"""
+    id: int
+    ehr_no: str
+    user_name: Optional[str] = None
+    from_group: Optional[str] = None
+    to_group: str
+    transfer_date: datetime
+    leave_date: Optional[datetime] = None
+    operator_ehr_no: str
+    operator_name: str
+    reason: Optional[str] = None
+    remark: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GroupTransferListResponse(BaseModel):
+    total: int
+    items: list[GroupTransferListItem]
+
+
+class GroupListResponse(BaseModel):
+    items: list[str]
+
+
+# ====== Step 3: 智能筛选四大场景 ======
+class ScenarioSearchRequest(BaseModel):
+    scenario: str  # emergency | activity | project | transfer
+    # 通用筛选
+    group_name: Optional[str] = None
+    role: Optional[str] = None
+    include_disabled: bool = False
+    # 应急响应
+    max_commute_minutes: Optional[int] = None
+    # 活动选人
+    interest_tags: Optional[list[str]] = None
+    # 项目组队
+    required_skill_tags: Optional[list[str]] = None
+    min_cert_count: Optional[int] = None
+    min_project_count: Optional[int] = None
+    # 人员调配
+    target_group: Optional[str] = None
+
+
+class ScenarioSearchItem(BaseModel):
+    ehr_no: str
+    name: str
+    group_name: str
+    role: str
+    is_emergency_staff: bool = False
+    commute_minutes: Optional[int] = None
+    skill_tags: list[str] = []
+    cert_count: int = 0
+    project_count: int = 0
+    match_score: float = 0.0
+    matched_tags: list[str] = []         # 命中的标签
+    has_required_skills: bool = False
+    has_interests: bool = False
+
+
+class ScenarioSearchResponse(BaseModel):
+    total: int
+    items: list[ScenarioSearchItem]
+    scenario: str
+
+
+# ====== Step 4: 团队能力分析 ======
+class SkillCountItem(BaseModel):
+    skill_name: str
+    count: int
+    holders: list[str] = []  # EHR 列表
+
+
+class SkillDistributionResponse(BaseModel):
+    items: list[SkillCountItem]
+    total_employees: int
+
+
+class GroupDensityItem(BaseModel):
+    group_name: str
+    count: int
+    is_emergency_count: int = 0
+
+
+class OverviewResponse(BaseModel):
+    skills: list[SkillCountItem] = []
+    groups: list[GroupDensityItem] = []
+    total_employees: int = 0
+
+
+class CertificateStatItem(BaseModel):
+    cert_name: str
+    count: int
+    holders: list[str] = []
+
+
+class CertificateStatResponse(BaseModel):
+    items: list[CertificateStatItem]
+    total_certs: int = 0
+
+
+class RiskWarningItem(BaseModel):
+    level: str  # red | yellow | green
+    type: str   # skill | emergency
+    title: str
+    description: str = ""
+    details: list[str] = []
+
+
+class RisksResponse(BaseModel):
+    items: list[RiskWarningItem]
+    red_count: int = 0
+    yellow_count: int = 0
+    green_count: int = 0
+
+
+class EmergencyStatItem(BaseModel):
+    bucket: str
+    count: int
+
+
+class EmergencyStatsResponse(BaseModel):
+    items: list[EmergencyStatItem]
+    total_emergency: int = 0
+    total_employees: int = 0
+    coverage_rate: float = 0.0

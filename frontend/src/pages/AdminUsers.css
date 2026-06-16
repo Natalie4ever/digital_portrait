@@ -27,6 +27,15 @@
   color: #1890ff;
 }
 
+/* 调组操作链接（Step 2）*/
+.action-transfer-link {
+  color: #fa8c16 !important;
+  font-weight: 500;
+}
+.action-transfer-link:hover {
+  color: #d46b08 !important;
+}
+
 /* 状态按钮 */
 .status-btn {
   border-radius: 4px;

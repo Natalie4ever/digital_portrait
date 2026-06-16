@@ -18,7 +18,7 @@ from app.schemas import (
     UserListResponse,
     AdminResetPasswordRequest,
 )
-from app.auth import get_current_admin, get_current_user, leader_effective_group
+from app.auth import get_current_admin, get_current_user, leader_effective_group, hash_password
 from app.config import settings
 from app.operation_log import log_operation
 from app.validators import validate_ehr_no
@@ -137,12 +137,25 @@ async def update_user(
         raise HTTPException(status_code=404, detail="用户不存在")
     if body.name is not None:
         user.name = body.name.strip()
-    if body.group_name is not None:
-        user.group_name = body.group_name.strip()
     if body.role is not None and body.role in ("user", "leader", "admin"):
         user.role = body.role
     if body.is_disabled is not None:
         user.is_disabled = body.is_disabled
+    # Step 2: 调组（group_name 变化）走 transfer_user 写历史
+    if body.group_name is not None and body.group_name.strip() != (user.group_name or "").strip():
+        from app.routers.group_transfers import _do_transfer
+        await _do_transfer(
+            db,
+            ehr_no=ehr_no,
+            to_group=body.group_name,
+            transfer_date=None,
+            reason="通过用户管理编辑调组",
+            remark=None,
+            operator=current_user,
+        )
+    elif body.group_name is not None:
+        # 同组内仅做 trim，不写历史
+        user.group_name = body.group_name.strip()
     db.add(user)
     await db.flush()
     await log_operation(db, current_user.id, "update_user", "users", ehr_no, None)
