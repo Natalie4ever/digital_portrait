@@ -170,13 +170,10 @@ export default function HomeVisitForm() {
         family2_work_unit: values.family2_work_unit,
         feedback: values.feedback,
       };
-      if (!payload.visit_time) {
-        message.error('请选择家访时间');
-        return;
-      }
-      if (!payload.visit_method) {
-        message.error('请选择家访方式');
-        return;
+      // 防御性：以 visit_time 为准，确保 visit_year 与之年份一致
+      if (payload.visit_time) {
+        const t = dayjs(payload.visit_time);
+        payload.visit_year = t.year();
       }
 
       setLoading(true);
@@ -263,8 +260,8 @@ export default function HomeVisitForm() {
               </Row>
               <Row gutter={16}>
                 <Col span={8}>
-                  <Form.Item name="visit_year" label="家访年度" rules={[{ required: true, message: '必填' }]}>
-                    <Select placeholder="选择年度" options={Array.from({ length: 10 }, (_, i) => ({ value: new Date().getFullYear() - i, label: `${new Date().getFullYear() - i}年` }))} />
+                  <Form.Item name="visit_year" label="家访年度">
+                    <Input placeholder="选择日期后自动填充" disabled />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
@@ -273,7 +270,12 @@ export default function HomeVisitForm() {
                       format="YYYY-MM-DD"
                       style={{ width: '100%' }}
                       onChange={(date) => {
-                        if (date) form.setFieldsValue({ visit_date: date });
+                        if (date) {
+                          form.setFieldsValue({
+                            visit_date: date,
+                            visit_year: date.year(),
+                          });
+                        }
                       }}
                     />
                   </Form.Item>
@@ -314,7 +316,7 @@ export default function HomeVisitForm() {
                       format="YYYY-MM-DD"
                       style={{ width: '100%' }}
                       onChange={(date) => {
-                        if (date) form.setFieldsValue({ visit_time: date });
+                        if (date) form.setFieldsValue({ visit_time: date, visit_year: date.year() });
                       }}
                     />
                   </Form.Item>
