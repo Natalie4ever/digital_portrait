@@ -63,9 +63,13 @@ export default function Login() {
     try {
       const data = await login(values.username.trim(), values.password);
       setToken(data.access_token);
-      await refreshUser();
+      const user = await refreshUser();
       message.success('登录成功');
-      navigate('/', { replace: true });
+      if (user?.is_first_login) {
+        navigate('/change-password', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err) {
       message.error(err.message || '登录失败');
     } finally {

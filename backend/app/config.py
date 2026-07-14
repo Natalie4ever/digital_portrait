@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 1 小时无操作自动登出
     # 初始密码（导入无密码时）
-    DEFAULT_PASSWORD: str = "1234567"
+    DEFAULT_PASSWORD: str = "Aa@1234567"
 
     class Config:
         env_file = ".env"

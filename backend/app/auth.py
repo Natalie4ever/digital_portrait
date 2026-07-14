@@ -19,6 +19,22 @@ security = HTTPBearer(auto_error=False)
 _PBKDF2_ITERATIONS = 100_000
 
 
+def validate_password_strength(password: str) -> tuple[bool, str]:
+    """验证密码强度，返回 (是否通过, 错误信息)"""
+    if len(password) < 8:
+        return False, "密码长度至少8位"
+    if not any(c.isdigit() for c in password):
+        return False, "密码必须包含数字"
+    if not any(c.islower() for c in password):
+        return False, "密码必须包含小写字母"
+    if not any(c.isupper() for c in password):
+        return False, "密码必须包含大写字母"
+    special_chars = "!@#$%^&*()_+-=[]{}|;:',.<>?/`"
+    if not any(c in special_chars for c in password):
+        return False, f"密码必须包含特殊字符（如 {special_chars[:5]} 等）"
+    return True, ""
+
+
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(32)
     h = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _PBKDF2_ITERATIONS)

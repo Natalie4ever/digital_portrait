@@ -24,6 +24,9 @@ function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ padding: 48, textAlign: 'center' }}>加载中...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.is_first_login && window.location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
+  }
   if (adminOnly && user.role !== 'admin') return <Navigate to="/" replace />;
   return children;
 }

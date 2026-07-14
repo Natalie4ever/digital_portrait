@@ -14,14 +14,16 @@ export function AuthProvider({ children }) {
     if (!getToken()) {
       setUser(null);
       setLoading(false);
-      return;
+      return null;
     }
     try {
       const u = await getCurrentUser();
       setUser(u);
+      return u;
     } catch {
       setUser(null);
       clearToken();
+      return null;
     } finally {
       setLoading(false);
     }

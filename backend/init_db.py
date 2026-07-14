@@ -17,11 +17,11 @@ async def init():
                 name="系统管理员",
                 group_name="管理组",
                 role="admin",
-                password_hash=hash_password("1234567"),
+                password_hash=hash_password("Aa@1234567"),
             )
             db.add(u)
             await db.commit()
-            print("已创建默认管理员: ehr=0000001, 密码=1234567")
+            print("已创建默认管理员: ehr=0000001, 密码=Aa@1234567")
         else:
             print("管理员已存在，跳过")
     await engine.dispose()

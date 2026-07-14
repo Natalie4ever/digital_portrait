@@ -35,6 +35,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         "name": current_user.name,
         "group_name": current_user.group_name,
         "role": current_user.role,
+        "is_first_login": current_user.is_first_login,
     }
 
 
@@ -71,6 +72,7 @@ async def change_password(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="原密码错误")
     from app.auth import hash_password
     current_user.password_hash = hash_password(body.new_password)
+    current_user.is_first_login = False
     db.add(current_user)
     await db.flush()
     await log_operation(db, current_user.id, "change_password", "auth", "修改密码", None)

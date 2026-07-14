@@ -33,6 +33,15 @@ class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
 
+    @field_validator("new_password")
+    @classmethod
+    def password_must_be_strong(cls, v: str) -> str:
+        from app.auth import validate_password_strength
+        ok, msg = validate_password_strength(v)
+        if not ok:
+            raise ValueError(msg)
+        return v
+
 
 # ----- 用户（列表/详情，管理员用）-----
 class UserCreate(BaseModel):
@@ -46,6 +55,17 @@ class UserCreate(BaseModel):
     @classmethod
     def ehr_no_seven_digits(cls, v: str) -> str:
         return _validate_ehr_no(v)
+
+    @field_validator("initial_password")
+    @classmethod
+    def initial_password_must_be_strong(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        from app.auth import validate_password_strength
+        ok, msg = validate_password_strength(v)
+        if not ok:
+            raise ValueError(msg)
+        return v
 
 
 class UserUpdate(BaseModel):
@@ -457,6 +477,15 @@ class AdminResetPasswordRequest(BaseModel):
     @classmethod
     def ehr_no_seven_digits(cls, v: str) -> str:
         return _validate_ehr_no(v)
+
+    @field_validator("new_password")
+    @classmethod
+    def password_must_be_strong(cls, v: str) -> str:
+        from app.auth import validate_password_strength
+        ok, msg = validate_password_strength(v)
+        if not ok:
+            raise ValueError(msg)
+        return v
 
 
 # ----- 家访记录 -----

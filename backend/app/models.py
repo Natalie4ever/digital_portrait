@@ -24,6 +24,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="user")
     password_hash = Column(String(255), nullable=False)
     is_disabled = Column(Boolean, default=False)
+    is_first_login = Column(Boolean, default=True)
     deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

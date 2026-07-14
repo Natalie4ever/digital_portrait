@@ -18,7 +18,7 @@ from app.schemas import (
     UserListResponse,
     AdminResetPasswordRequest,
 )
-from app.auth import get_current_admin, get_current_user, leader_effective_group, hash_password
+from app.auth import get_current_admin, get_current_user, leader_effective_group, hash_password, validate_password_strength
 from app.config import settings
 from app.operation_log import log_operation
 from app.validators import validate_ehr_no
@@ -254,7 +254,13 @@ async def batch_import(
         if r.scalar_one_or_none():
             skipped += 1
             continue
-        pwd = pwd or settings.DEFAULT_PASSWORD
+        if pwd:
+            ok, msg = validate_password_strength(pwd)
+            if not ok:
+                errors.append(f"第{row_idx}行: 密码强度不足 - {msg}")
+                continue
+        else:
+            pwd = settings.DEFAULT_PASSWORD
         user = User(
             ehr_no=ehr,
             name=name or ehr,
