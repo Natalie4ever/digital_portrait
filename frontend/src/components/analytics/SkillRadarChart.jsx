@@ -13,6 +13,10 @@ export default function SkillRadarChart({ skills = [], total = 0 }) {
       text: '技能分布 TOP 10',
       subtext: `共 ${total} 名员工 / ${skills.length} 个技能`,
       left: 'center',
+      top: 40,
+    },
+    grid: {
+      top: 120,
     },
     tooltip: {
       trigger: 'item',
@@ -20,6 +24,7 @@ export default function SkillRadarChart({ skills = [], total = 0 }) {
     radar: {
       indicator: top.map((s) => ({ name: s.skill_name, max: Math.max(...top.map((x) => x.count), 5) + 2 })),
       radius: '65%',
+      center: ['50%', '65%'],
     },
     series: [
       {

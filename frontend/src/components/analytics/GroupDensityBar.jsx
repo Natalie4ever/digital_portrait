@@ -10,9 +10,10 @@ export default function GroupDensityBar({ groups = [] }) {
     title: {
       text: '各组别人数与应急先锋队',
       left: 'center',
+      bottom: 10,
     },
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    legend: { data: ['总人数', '应急先锋队人数'], top: 30 },
+    legend: { data: ['总人数', '应急先锋队人数'], top: 40 },
     grid: { top: 80, left: 60, right: 30, bottom: 60 },
     xAxis: {
       type: 'category',
