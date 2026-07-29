@@ -188,11 +188,11 @@ export default function AdminUsers() {
       title: '应急先锋队',
       dataIndex: 'is_emergency_staff',
       key: 'is_emergency_staff',
-      width: 110,
+      width: 140,
       render: (v, u) => (
         <span
           className={v ? 'emergency-tag-on' : 'emergency-tag-off'}
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
           onClick={() => handleToggleEmergency(u)}
           title="点击切换"
         >
@@ -229,25 +229,11 @@ export default function AdminUsers() {
       fixed: 'right',
       render: (_, u) => (
         <Space>
-          <Button type="link" size="small" onClick={() => setModal({ type: 'edit', data: u })}>编辑</Button>
-          <Button
-            type="link"
-            size="small"
-            className="action-transfer-link"
-            onClick={() => openTransfer(u)}
-          >
-            调组
-          </Button>
+          {!u.is_superadmin && <Button type="link" size="small" onClick={() => setModal({ type: 'edit', data: u })}>编辑</Button>}
+          {!u.is_superadmin && <Button type="link" size="small" className="action-transfer-link" onClick={() => openTransfer(u)}>调组</Button>}
           <Button type="link" size="small" onClick={() => setModal({ type: 'resetPwd', data: u })}>重置密码</Button>
-          <Button
-            type="link"
-            size="small"
-            className="action-warn-link"
-            onClick={() => handleToggleDisabled(u)}
-          >
-            {u.is_disabled ? '启用' : '禁用'}
-          </Button>
-          <Button type="link" size="small" danger onClick={() => handleDelete(u.ehr_no)}>删除</Button>
+          {!u.is_superadmin && <Button type="link" size="small" className="action-warn-link" onClick={() => handleToggleDisabled(u)}>{u.is_disabled ? '启用' : '禁用'}</Button>}
+          {!u.is_superadmin && <Button type="link" size="small" danger onClick={() => handleDelete(u.ehr_no)}>删除</Button>}
         </Space>
       ),
     },
@@ -389,7 +375,7 @@ export default function AdminUsers() {
       {modal?.type === 'import' && (
         <Modal title="批量导入" open onOk={handleImport} onCancel={() => setModal(null)} okButtonProps={{ disabled: !importFile }} okText="导入" width={520} className="import-modal">
           <p className="import-hint">
-            Excel 需包含列：<strong>姓名、ehr号、组别</strong>；可选：<strong>角色、初始密码</strong>。无密码时默认 1234567。EHR 号必须为 7 位数字。
+            Excel 需包含列：<strong>姓名、EHR号、组别</strong>；可选：<strong>角色、初始密码</strong>。无密码时默认 Aa@1234567。EHR 号必须为 7 位数字。
           </p>
           <div className="import-file-input">
             <UploadOutlined />

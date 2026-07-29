@@ -135,6 +135,8 @@ async def update_user(
     user = r.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
+    if user.is_superadmin:
+        raise HTTPException(status_code=403, detail="超级管理员账号不可修改")
     if body.name is not None:
         user.name = body.name.strip()
     if body.role is not None and body.role in ("user", "leader", "admin"):
@@ -174,6 +176,8 @@ async def delete_user(
     user = r.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
+    if user.is_superadmin:
+        raise HTTPException(status_code=403, detail="超级管理员账号不可删除")
     user.deleted_at = datetime.utcnow()
     db.add(user)
     await db.flush()

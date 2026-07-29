@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message, Typography, Spin } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { login, setToken, checkEhr } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
@@ -132,7 +132,8 @@ export default function Login() {
               />
             </Form.Item>
             {ehrValidated && ehrUserName && (
-              <div style={{ marginBottom: 16, color: '#52c41a', fontSize: 14 }}>
+              <div style={{ marginBottom: 16, color: 'var(--color-primary)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircleOutlined />
                 欢迎，{ehrUserName}
               </div>
             )}

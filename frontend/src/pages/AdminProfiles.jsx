@@ -112,7 +112,7 @@ export default function AdminProfiles() {
       title: '应急先锋队',
       dataIndex: 'is_emergency_staff',
       key: 'is_emergency_staff',
-      width: 110,
+      width: 140,
       render: (v, r) => (
         <span
           style={{
@@ -124,6 +124,7 @@ export default function AdminProfiles() {
             borderRadius: 12,
             fontSize: 12,
             cursor: 'pointer',
+            whiteSpace: 'nowrap',
           }}
           onClick={() => handleToggleEmergency(r)}
           title="点击切换"

@@ -1,4 +1,4 @@
-# 先固定 greenlet，使用有 Windows 预编译 wheel 的版本，避免本地编译（需 VS Build Tools）
+
 greenlet==3.0.3
 fastapi==0.109.2
 uvicorn[standard]==0.27.1

@@ -83,6 +83,7 @@ class UserResponse(BaseModel):
     role: str
     is_disabled: bool
     is_emergency_staff: bool = False
+    is_superadmin: bool = False
     created_at: datetime
 
     class Config:
