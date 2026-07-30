@@ -20,6 +20,12 @@ export default function HomeVisitExport({ data }) {
             margin: 0 !important;
             max-width: 100% !important;
             width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .feedback-content {
+            flex: 1 !important;
+            min-height: auto !important;
           }
         }
       `}</style>
@@ -88,7 +94,7 @@ export default function HomeVisitExport({ data }) {
         </table>
 
         <div style={exportStyles.feedbackTitle}>员工家庭情况及家属反馈意见</div>
-        <div style={exportStyles.feedbackContent}>
+        <div className="feedback-content" style={exportStyles.feedbackContent}>
           {data.feedback || ''}
         </div>
 

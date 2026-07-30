@@ -63,6 +63,26 @@ export default function HomeVisitDetail() {
       clone.style.position = 'relative';
       clone.style.left = '0';
       clone.style.top = '0';
+
+      // 为导出 PDF 添加专用样式，使反馈区域填充整个 A4 页面
+      const container = clone.querySelector('.home-visit-export');
+      if (container) {
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.height = '277mm';  // A4 纸张可用高度（297mm - 10mm上 - 10mm下）
+        container.style.padding = '10px';
+        container.style.margin = '0';
+        container.style.maxWidth = '100%';
+        container.style.width = '100%';
+        container.style.boxSizing = 'border-box';
+      }
+
+      const feedbackContent = clone.querySelector('.feedback-content');
+      if (feedbackContent) {
+        feedbackContent.style.flex = '1';  // 填充容器剩余高度
+        feedbackContent.style.minHeight = 'auto';
+      }
+
       wrapper = document.createElement('div');
       wrapper.style.cssText = 'position:fixed;left:0;top:0;z-index:-1;transform:translateX(-9999px);pointer-events:none';
       wrapper.appendChild(clone);
