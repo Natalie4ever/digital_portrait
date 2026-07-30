@@ -281,7 +281,7 @@ export default function AdminUsers() {
                     含已禁用
                   </Checkbox>
                 </Col>
-                <Col xs={24} sm={12} md={6} lg={6}>
+                <Col xs={24} sm={12} md={6} lg={5}>
                   <Input
                     placeholder="EHR 号"
                     value={filters.ehr_no || ''}
@@ -291,7 +291,7 @@ export default function AdminUsers() {
                     className="filter-input"
                   />
                 </Col>
-                <Col xs={24} sm={12} md={6} lg={6}>
+                <Col xs={24} sm={12} md={6} lg={5}>
                   <Input
                     placeholder="姓名"
                     value={filters.name || ''}
@@ -301,7 +301,7 @@ export default function AdminUsers() {
                     className="filter-input"
                   />
                 </Col>
-                <Col xs={24} sm={12} md={6} lg={8}>
+                <Col xs={24} sm={12} md={6} lg={6}>
                   <Select
                     placeholder="角色"
                     value={filters.role || undefined}
@@ -312,7 +312,7 @@ export default function AdminUsers() {
                     {ROLE_OPTIONS.map((o) => <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>)}
                   </Select>
                 </Col>
-                <Col xs={24} sm={12} md={6} lg={6}>
+                <Col xs={24} sm={12} md={6} lg={4}>
                   <Select
                     placeholder="应急先锋队"
                     value={filters.is_emergency_staff === undefined ? undefined : (filters.is_emergency_staff ? 'true' : 'false')}
