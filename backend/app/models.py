@@ -1,5 +1,5 @@
 # 数据模型：字段类型兼容 SQLite 与 SQL Server
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 from sqlalchemy import (
     Boolean,
     Column,
@@ -15,6 +15,15 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 
+# 北京时间（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+
+def beijing_now():
+    """返回北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ).replace(tzinfo=None)
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -27,8 +36,8 @@ class User(Base):
     is_first_login = Column(Boolean, default=True)
     is_superadmin = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
 
     profile = relationship("Profile", back_populates="user", uselist=False)
     operation_logs = relationship("OperationLog", back_populates="user", foreign_keys="OperationLog.user_id")
@@ -60,8 +69,8 @@ class Profile(Base):
     marital_status = Column(String(20), nullable=True)
     # Step 1 1.1: 应急先锋队标识
     is_emergency_staff = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
 
     user = relationship("User", back_populates="profile")
     political = relationship("PoliticalInfo", back_populates="profile", order_by="PoliticalInfo.join_date")
@@ -86,8 +95,8 @@ class PoliticalInfo(Base):
     political_status = Column(String(50), nullable=True)
     join_date = Column(Date, nullable=True)
     introducer = Column(String(200), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="political")
 
 
@@ -106,8 +115,8 @@ class EducationInfo(Base):
     graduation_date = Column(Date, nullable=True)  # 毕业时间
     completion_status = Column(String(50), nullable=True)  # 学习完成情况
     country = Column(String(100), nullable=True)  # 学历授予国家（地区）
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="education")
 
 
@@ -122,8 +131,8 @@ class FamilyInfo(Base):
     work_unit_and_title = Column(String(500), nullable=True)  # 亲属工作单位及职位
     political_status = Column(String(50), nullable=True)  # 亲属政治面貌
     employment_status = Column(String(50), nullable=True)  # 人员状况
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="family")
 
 
@@ -134,8 +143,8 @@ class ResumeInfo(Base):
     start_time = Column(Date, nullable=True)
     end_time = Column(Date, nullable=True)
     unit_and_title = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="resume")
 
 
@@ -147,8 +156,8 @@ class RewardInfo(Base):
     reward_time = Column(Date, nullable=True)
     reward_name = Column(String(300), nullable=True)
     reward_reason = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="reward")
 
 
@@ -160,8 +169,8 @@ class QualificationInfo(Base):
     obtain_time = Column(Date, nullable=True)
     # Step 1 1.2: 证书有效期
     valid_until = Column(Date, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="qualification")
 
 
@@ -171,8 +180,8 @@ class AchievementInfo(Base):
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     achievement_name = Column(String(300), nullable=True)
     obtain_time = Column(Date, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="achievement")
 
 
@@ -183,8 +192,8 @@ class LanguageInfo(Base):
     language = Column(String(50), nullable=True)
     proficiency = Column(String(50), nullable=True)
     cert_level_or_score = Column(String(200), nullable=True)  # 语言能力证书级别/分数
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="language")
 
 
@@ -198,8 +207,8 @@ class ContactInfo(Base):
     home_address = Column(String(500), nullable=True)
     email = Column(String(100), nullable=True)
     commute_minutes = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="contact")
 
 
@@ -228,8 +237,8 @@ class DevelopmentIntent(Base):
     # 第四部分：其他补充
     other_comments = Column(Text, nullable=True)               # 其他补充
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="development_intent")
 
 
@@ -243,8 +252,8 @@ class ProjectSummary(Base):
     end_time = Column(Date, nullable=True)
     role = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     profile = relationship("Profile", back_populates="project_summaries")
     tags = relationship("ProjectSummaryTag", back_populates="project", cascade="all, delete-orphan")
 
@@ -264,7 +273,7 @@ class SkillTagTemplate(Base):
     __tablename__ = "skill_tag_templates"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False, unique=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
 
 
 # 用户档案-技能标签（多对多，支持预定义+自定义，自定义即不在 template 里）
@@ -274,7 +283,7 @@ class ProfileSkillTag(Base):
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     tag_name = Column(String(100), nullable=False)
     template_id = Column(Integer, ForeignKey("skill_tag_templates.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
     profile = relationship("Profile", back_populates="skill_tags")
 
 
@@ -286,7 +295,7 @@ class OperationLog(Base):
     resource = Column(String(100), nullable=True)
     detail = Column(Text, nullable=True)
     ip = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
     user = relationship("User", back_populates="operation_logs", foreign_keys=[user_id])
 
 
@@ -323,8 +332,8 @@ class HomeVisitRecord(Base):
 
     feedback = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
 
     visited_user = relationship("User", foreign_keys=[visited_user_id])
     visitor_user = relationship("User", foreign_keys=[visitor_user_id])
@@ -346,7 +355,7 @@ class GroupTransferHistory(Base):
     operator_name = Column(String(100), nullable=False)    # 冗余便于历史快照
     reason = Column(String(500), nullable=True)            # 调组原因
     remark = Column(String(500), nullable=True)            # 备注
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
 
     user = relationship("User", foreign_keys=[user_id])
     operator = relationship("User", foreign_keys=[operator_user_id])

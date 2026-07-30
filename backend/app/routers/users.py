@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from openpyxl import load_workbook
 
 from app.database import get_db
-from app.models import User, Profile
+from app.models import User, Profile, beijing_now
 from app.schemas import (
     UserCreate,
     UserUpdate,
@@ -178,7 +178,7 @@ async def delete_user(
         raise HTTPException(status_code=404, detail="用户不存在")
     if user.is_superadmin:
         raise HTTPException(status_code=403, detail="超级管理员账号不可删除")
-    user.deleted_at = datetime.utcnow()
+    user.deleted_at = beijing_now()
     db.add(user)
     await db.flush()
     await log_operation(db, current_user.id, "delete_user", "users", ehr_no, None)

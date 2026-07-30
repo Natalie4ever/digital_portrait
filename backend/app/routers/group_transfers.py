@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import User, GroupTransferHistory
+from app.models import User, GroupTransferHistory, beijing_now
 from app.schemas import (
     GroupTransferRequest,
     GroupTransferResponse,
@@ -50,7 +50,7 @@ async def _do_transfer(
         raise HTTPException(status_code=400, detail=f"员工已在 {old_group}，无需调组")
 
     # 2. 关闭所有"未结束"的历史（leave_date = now）
-    now = datetime.utcnow()
+    now = beijing_now()
     await db.execute(
         update(GroupTransferHistory)
         .where(
