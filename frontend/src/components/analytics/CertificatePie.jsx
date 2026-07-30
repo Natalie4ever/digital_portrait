@@ -6,7 +6,11 @@ const COLORS = ['#D05A6E', '#5B8FF9', '#5AD8A6', '#F6BD16', '#E86452', '#6DC8EC'
 
 export default function CertificatePie({ items = [], total = 0 }) {
   if (!items.length) {
-    return <Empty description="暂无证书数据" />;
+    return (
+      <div style={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Empty description="暂无证书数据" />
+      </div>
+    );
   }
   const data = items.map((it, i) => ({ name: it.cert_name, value: it.count, itemStyle: { color: COLORS[i % COLORS.length] } }));
   const option = {
@@ -14,6 +18,7 @@ export default function CertificatePie({ items = [], total = 0 }) {
       text: '证书类型分布',
       subtext: `共 ${total} 张证书 / ${items.length} 种类型`,
       left: 'center',
+      top: 16,
     },
     tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} 张 ({d}%)' },
     legend: { type: 'scroll', orient: 'horizontal', bottom: 0 },
@@ -21,8 +26,8 @@ export default function CertificatePie({ items = [], total = 0 }) {
       {
         name: '证书',
         type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['50%', '45%'],
+        radius: ['32%', '60%'],
+        center: ['50%', '53%'],
         avoidLabelOverlap: true,
         itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
         label: { formatter: '{b}\n{c} 张' },
