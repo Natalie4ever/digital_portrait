@@ -1,6 +1,6 @@
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -22,9 +22,10 @@ import AdminAnalytics from './pages/AdminAnalytics';
 
 function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
+  const location = useLocation();  // 修复 AUTH-009：用 useLocation 替代 window.location.pathname，确保嵌套路由切换时守卫生效
   if (loading) return <div style={{ padding: 48, textAlign: 'center' }}>加载中...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.is_first_login && window.location.pathname !== '/change-password') {
+  if (user.is_first_login && location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />;
   }
   if (adminOnly && user.role !== 'admin') return <Navigate to="/" replace />;

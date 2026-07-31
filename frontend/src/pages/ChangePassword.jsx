@@ -46,7 +46,7 @@ function PasswordStrengthIndicator({ password }) {
 export default function ChangePassword() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { refreshUser, user } = useAuth();
+  const { refreshUser, user, logout } = useAuth();
   const [form] = Form.useForm();
   const [newPassword, setNewPassword] = useState('');
 
@@ -55,12 +55,17 @@ export default function ChangePassword() {
       message.error('两次输入的新密码不一致');
       return;
     }
+    if (values.new_password === values.old_password) {
+      message.error('新密码不能与原密码相同');
+      return;
+    }
     setLoading(true);
     try {
       await changePassword(values.old_password, values.new_password);
-      message.success('密码已修改');
-      await refreshUser();
-      navigate('/', { replace: true });
+      message.success('密码已修改，请重新登录');
+      // 修复 AUTH-012：修改密码后必须清 token 跳登录页（旧 JWT 仍有效属安全债，留 R4 处理）
+      logout();
+      navigate('/login', { replace: true });
     } catch (err) {
       message.error(err.message || '修改失败');
     } finally {

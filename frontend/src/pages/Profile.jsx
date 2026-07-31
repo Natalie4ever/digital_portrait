@@ -100,6 +100,12 @@ function findPathByConcatenatedName(nodes, targetStr, path = []) {
 
 const REGION_FIELDNAMES = { label: 'name', value: 'name', children: 'children' };
 
+// 修复 PRO-016：segment 名（用于 API 路径）与 state key（用于响应体字段名）不一致时的映射。
+// project_summary 调用的是 /me/project-summary，但响应体字段叫 project_summaries。
+const SEGMENT_TO_STATE_KEY = {
+  project_summary: 'project_summaries',
+};
+
 export default function Profile({ ehrOverride }) {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -214,9 +220,12 @@ export default function Profile({ ehrOverride }) {
       const res = id
         ? await updateSub(segment, id, body)
         : await createSub(segment, body);
+      // 修复 PRO-016：segment 与后端响应体字段名不一致时（如 project_summary → project_summaries），
+      // 需要做映射，否则新记录塞进不存在的键，列表看不到。
+      const stateKey = SEGMENT_TO_STATE_KEY[segment] || segment;
       setProfile((prev) => {
         const next = { ...prev };
-        const list = [...(next[segment] || [])];
+        const list = [...(next[stateKey] || [])];
         if (id) {
           const idx = list.findIndex((item) => item.id === id);
           if (idx >= 0) list[idx] = res;
@@ -224,7 +233,7 @@ export default function Profile({ ehrOverride }) {
         } else {
           list.push(res);
         }
-        next[segment] = list;
+        next[stateKey] = list;
         return next;
       });
       message.success('已保存');

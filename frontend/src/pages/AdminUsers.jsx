@@ -53,7 +53,7 @@ export default function AdminUsers() {
   const [data, setData] = useState({ total: 0, items: [] });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
-  const [filters, setFilters] = useState({ include_disabled: true });
+  const [filters, setFilters] = useState({ include_disabled: false });  // 修复 USR-004：默认不勾选（不显示已禁用用户），让复选框有实际切换效果
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null);

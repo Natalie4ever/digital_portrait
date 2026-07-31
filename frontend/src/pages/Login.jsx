@@ -10,6 +10,7 @@ const { Title, Paragraph } = Typography;
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');  // 登录失败的统一内联提示（修 AUTH-004/005/006/007）
   const [ehrValidated, setEhrValidated] = useState(false);
   const [ehrUserName, setEhrUserName] = useState('');
   const [ehrChecking, setEhrChecking] = useState(false);
@@ -60,6 +61,7 @@ export default function Login() {
 
   const handleSubmit = async (values) => {
     setLoading(true);
+    setSubmitError('');
     try {
       const data = await login(values.username.trim(), values.password);
       setToken(data.access_token);
@@ -71,7 +73,8 @@ export default function Login() {
         navigate('/', { replace: true });
       }
     } catch (err) {
-      message.error(err.message || '登录失败');
+      // 内联显示错误，避开 message.error 在某些情况下被吞掉的问题
+      setSubmitError(err.message || 'EHR号或密码错误');
     } finally {
       setLoading(false);
     }
@@ -159,11 +162,24 @@ export default function Login() {
                 block
                 size="large"
                 loading={loading}
-                disabled={!ehrValidated}
               >
                 登录
               </Button>
             </Form.Item>
+            {submitError && (
+              <div
+                role="alert"
+                style={{
+                  marginTop: -8,
+                  marginBottom: 16,
+                  color: '#ff4d4f',
+                  fontSize: 14,
+                  textAlign: 'center',
+                }}
+              >
+                {submitError}
+              </div>
+            )}
           </Form>
 
           <div className="security-tips">

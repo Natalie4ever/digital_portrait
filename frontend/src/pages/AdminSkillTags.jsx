@@ -31,7 +31,12 @@ export default function AdminSkillTags() {
 
   const add = async () => {
     const name = newName.trim();
-    if (!name) return;
+    // 修复 TAG-004：原代码 if (!name) return; 静默拦截，用户体感"按钮无响应"；
+    // 改为显式 message.warning 提示
+    if (!name) {
+      message.warning('标签名称不能为空');
+      return;
+    }
     setError('');
     try {
       await createSkillTagTemplate(name);
