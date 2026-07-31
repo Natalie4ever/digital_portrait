@@ -154,6 +154,11 @@ async def scenario_search(
             req_skills = body.required_skill_tags or []
             min_cert = body.min_cert_count or 0
             min_proj = body.min_project_count or 0
+            # 硬门槛：min_cert > 0 时证书数必须达标；min_proj > 0 时项目数必须达标（修复 SCN-005）
+            if min_cert > 0 and cert_count < min_cert:
+                continue
+            if min_proj > 0 and project_count < min_proj:
+                continue
             score = 0
             matched_skills = [s for s in req_skills if s in skill_tags]
             if req_skills and not matched_skills:

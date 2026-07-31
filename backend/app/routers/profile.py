@@ -79,7 +79,7 @@ router = APIRouter(prefix="/api/profile", tags=["个人档案"])
 
 
 async def _leader_can_access(db: AsyncSession, viewer: User, target: User) -> bool:
-    """Step 2: 组长判定 — 基于调换历史 leave_date IS NULL"""
+    """Step 2: 组长判定 — 优先看调换历史 leave_date IS NULL；无记录时 fallback 到 User.group_name"""
     lg = leader_effective_group(viewer)
     if not lg:
         return False
@@ -91,9 +91,11 @@ async def _leader_can_access(db: AsyncSession, viewer: User, target: User) -> bo
         )
     )
     active = r.scalar_one_or_none()
-    if not active:
-        return False
-    return (active.to_group or "").strip() == lg
+    if active:
+        return (active.to_group or "").strip() == lg
+    # Fallback: 无 active 调组记录时（典型：初始化数据 / create_user 未写 GroupTransferHistory），
+    # 直接比对 User.group_name，避免组长永远 403 的问题（修复 PRO-018 / HV-009 / HV-010）。
+    return (target.group_name or "").strip() == lg
 
 
 def _can_access(viewer: User, target: User) -> bool:

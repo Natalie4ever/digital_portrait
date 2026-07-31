@@ -88,5 +88,6 @@ TZfrontend
 TZfrontend.backup
 .cursor
 .cursor/rules
+course/
 
 practice/

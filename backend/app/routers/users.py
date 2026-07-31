@@ -196,6 +196,7 @@ async def reset_password(
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
     user.password_hash = hash_password(body.new_password)
+    user.is_first_login = True  # 管理员重置密码后，下次登录强制改密（修复 USR-014）
     db.add(user)
     await db.flush()
     await log_operation(db, current_user.id, "reset_password", "users", body.ehr_no, None)
