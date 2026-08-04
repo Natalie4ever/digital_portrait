@@ -13,6 +13,7 @@ import {
   Alert,
   Row,
   Col,
+  Switch,
 } from 'antd';
 import {
   PlusOutlined,
@@ -106,7 +107,7 @@ export default function AdminUsers() {
   };
 
   const handleDelete = (ehr_no) => {
-    Modal.confirm({ title: `确定删除用户 ${ehr_no}？（软删除）`, onOk: async () => {
+    Modal.confirm({ title: `确定删除用户 ${ehr_no}？`, onOk: async () => {
       try {
         await deleteUser(ehr_no);
         message.success('已删除');
@@ -188,16 +189,14 @@ export default function AdminUsers() {
       title: '应急先锋队',
       dataIndex: 'is_emergency_staff',
       key: 'is_emergency_staff',
-      width: 140,
+      width: 100,
       render: (v, u) => (
-        <span
-          className={v ? 'emergency-tag-on' : 'emergency-tag-off'}
-          style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
-          onClick={() => handleToggleEmergency(u)}
-          title="点击切换"
-        >
-          {v ? '🚨 应急先锋队' : '—'}
-        </span>
+        <Switch
+          checked={v}
+          onChange={() => handleToggleEmergency(u)}
+          checkedChildren="🚨"
+          unCheckedChildren="—"
+        />
       ),
     },
     {
@@ -457,7 +456,7 @@ function UserFormModal({ title, initial, ehrReadonly, onSave, onCancel }) {
         <Form.Item name="role" label="角色" rules={[{ required: true }]}>
           <Select options={ROLE_OPTIONS} className="modal-select" />
         </Form.Item>
-        {!ehrReadonly && <Form.Item name="initial_password" label="初始密码（不填则 1234567）"><Input.Password className="modal-input" /> </Form.Item>}
+        {!ehrReadonly && <Form.Item name="initial_password" label="初始密码（不填则 Aa@1234567）"><Input.Password className="modal-input" /> </Form.Item>}
       </Form>
     </Modal>
   );

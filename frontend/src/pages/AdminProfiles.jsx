@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Space, Input, Select, Button, Alert, Tag, InputNumber, Row, Col, message, Modal } from 'antd';
+import { Card, Table, Space, Input, Select, Button, Alert, Tag, InputNumber, Row, Col, message, Modal, Switch } from 'antd';
 import { SearchOutlined, FilterOutlined, UserOutlined, TeamOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { listProfiles, toggleEmergencyProfile } from '../api';
@@ -107,31 +107,6 @@ export default function AdminProfiles() {
           </span>
         );
       },
-    },
-    {
-      title: '应急先锋队',
-      dataIndex: 'is_emergency_staff',
-      key: 'is_emergency_staff',
-      width: 140,
-      render: (v, r) => (
-        <span
-          style={{
-            display: 'inline-block',
-            padding: '2px 10px',
-            backgroundColor: v ? '#fff1f0' : 'transparent',
-            color: v ? '#cf1322' : '#999',
-            border: v ? '1px solid #ffa39e' : 'none',
-            borderRadius: 12,
-            fontSize: 12,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
-          onClick={() => handleToggleEmergency(r)}
-          title="点击切换"
-        >
-          {v ? '🚨 应急先锋队' : '—'}
-        </span>
-      ),
     },
     {
       title: '标签',
