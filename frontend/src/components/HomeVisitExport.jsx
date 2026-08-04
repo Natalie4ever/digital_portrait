@@ -99,10 +99,14 @@ export default function HomeVisitExport({ data }) {
         </div>
 
         <div style={exportStyles.footer}>
-          <span style={exportStyles.footerLabel}>家访人姓名：</span>
-          <span style={exportStyles.footerValue}>{visitorName}</span>
-          <span style={{ marginLeft: 40 }}>家访人签字：</span>
-          <span style={exportStyles.signatureBox}></span>
+          <div>
+            <span style={exportStyles.footerLabel}>家访人姓名：</span>
+            <span style={exportStyles.footerValue}>{visitorName}</span>
+          </div>
+          <div>
+            <span style={exportStyles.footerLabel}>家访人签字：</span>
+            <span style={exportStyles.signatureBox}></span>
+          </div>
         </div>
       </div>
     </>
@@ -164,6 +168,7 @@ const exportStyles = {
   footer: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     flexWrap: 'wrap',
   },
   footerLabel: {
