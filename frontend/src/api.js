@@ -40,9 +40,11 @@ async function request(url, options = {}) {
   };
   const res = await fetch(BASE + url, { ...options, headers });
   if (res.status === 401) {
-    clearToken();
-    window.location.href = '/login';
-    throw new Error('登录已过期');
+    if (token) {
+      clearToken();
+      window.location.href = '/login';
+      throw new Error('登录已过期');
+    }
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));

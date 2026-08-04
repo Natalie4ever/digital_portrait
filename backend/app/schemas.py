@@ -20,7 +20,10 @@ class LoginRequest(BaseModel):
     @field_validator("ehr_no")
     @classmethod
     def ehr_no_seven_digits(cls, v: str) -> str:
-        return _validate_ehr_no(v)
+        try:
+            return _validate_ehr_no(v)
+        except ValueError:
+            raise ValueError("EHR号或密码错误")
 
 
 class TokenResponse(BaseModel):
@@ -101,7 +104,7 @@ class ProfileListItem(BaseModel):
     group_name: str
     role: str
     tags: list[str] = []
-    commute_minutes: Optional[int] = None
+    commute_minutes: Optional[int] = Field(default=None, ge=0)
     is_emergency_staff: bool = False
 
 
@@ -316,7 +319,7 @@ class ContactInfoCreate(BaseModel):
     home_phone: Optional[str] = None
     home_address: Optional[str] = None
     email: Optional[str] = None
-    commute_minutes: Optional[int] = None
+    commute_minutes: Optional[int] = Field(default=None, ge=0)
 
 
 class ContactInfoUpdate(ContactInfoCreate):
@@ -672,7 +675,7 @@ class ScenarioSearchRequest(BaseModel):
     role: Optional[str] = None
     include_disabled: bool = False
     # 应急响应
-    max_commute_minutes: Optional[int] = None
+    max_commute_minutes: Optional[int] = Field(default=None, ge=0)
     # 活动选人
     interest_tags: Optional[list[str]] = None
     # 项目组队
@@ -689,7 +692,7 @@ class ScenarioSearchItem(BaseModel):
     group_name: str
     role: str
     is_emergency_staff: bool = False
-    commute_minutes: Optional[int] = None
+    commute_minutes: Optional[int] = Field(default=None, ge=0)
     skill_tags: list[str] = []
     cert_count: int = 0
     project_count: int = 0

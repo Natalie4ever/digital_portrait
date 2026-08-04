@@ -10,11 +10,10 @@ const { Title, Paragraph } = Typography;
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
-  const [submitError, setSubmitError] = useState('');  // 登录失败的统一内联提示（修 AUTH-004/005/006/007）
+  const [submitError, setSubmitError] = useState('');
   const [ehrValidated, setEhrValidated] = useState(false);
   const [ehrUserName, setEhrUserName] = useState('');
   const [ehrChecking, setEhrChecking] = useState(false);
-  const [ehrError, setEhrError] = useState('');
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [form] = Form.useForm();
@@ -24,19 +23,16 @@ export default function Login() {
     if (!ehr || !/^\d{7}$/.test(ehr)) {
       setEhrValidated(false);
       setEhrUserName('');
-      setEhrError('');
       return;
     }
     setEhrChecking(true);
-    setEhrError('');
     try {
       const res = await checkEhr(ehr);
       setEhrValidated(true);
       setEhrUserName(res.name || '');
-    } catch (err) {
+    } catch {
       setEhrValidated(false);
       setEhrUserName('');
-      setEhrError(err.message || 'EHR号不存在');
     } finally {
       setEhrChecking(false);
     }
@@ -45,18 +41,6 @@ export default function Login() {
   const handleEhrChange = () => {
     setEhrValidated(false);
     setEhrUserName('');
-    setEhrError('');
-  };
-
-  const handleValuesChange = (changed, allValues) => {
-    if ('username' in changed) {
-      const ehr = (allValues.username ?? '')?.trim();
-      if (ehr && /^\d{7}$/.test(ehr)) {
-        handleEhrBlur();
-      } else {
-        handleEhrChange();
-      }
-    }
   };
 
   const handleSubmit = async (values) => {
@@ -114,17 +98,23 @@ export default function Login() {
             className="login-form"
             initialValues={{ remember: true }}
             onFinish={handleSubmit}
-            onValuesChange={handleValuesChange}
+            onValuesChange={(changed, allValues) => {
+              if ('username' in changed) {
+                const ehr = (allValues.username ?? '')?.trim();
+                if (ehr && /^\d{7}$/.test(ehr)) {
+                  handleEhrBlur();
+                } else {
+                  handleEhrChange();
+                }
+              }
+            }}
             form={form}
           >
             <Form.Item
               name="username"
               rules={[
-                { required: true, message: '请输入EHR号' },
-                { pattern: /^\d{7}$/, message: 'EHR号必须是7位数字' }
+                { required: true, message: '请输入EHR号' }
               ]}
-              validateStatus={ehrError ? 'error' : undefined}
-              help={ehrError}
             >
               <Input
                 prefix={<UserOutlined className="site-form-item-icon" />}
@@ -143,8 +133,7 @@ export default function Login() {
             <Form.Item
               name="password"
               rules={[
-                { required: true, message: '请输入密码' },
-                { min: 6, message: '密码至少6个字符' }
+                { required: true, message: '请输入密码' }
               ]}
             >
               <Input.Password
@@ -172,7 +161,7 @@ export default function Login() {
                 style={{
                   marginTop: -8,
                   marginBottom: 16,
-                  color: '#ff4d4f',
+                  color: 'var(--color-primary)',
                   fontSize: 14,
                   textAlign: 'center',
                 }}
