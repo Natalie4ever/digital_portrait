@@ -15,7 +15,7 @@ export default function CertificatePie({ items = [], total = 0 }) {
   const data = items.map((it, i) => ({ name: it.cert_name, value: it.count, itemStyle: { color: COLORS[i % COLORS.length] } }));
   const option = {
     title: {
-      text: '证书类型分布',
+      text: '资格证书类型分布',
       subtext: `共 ${total} 张证书 / ${items.length} 种类型`,
       left: 'center',
       top: 16,
@@ -24,7 +24,7 @@ export default function CertificatePie({ items = [], total = 0 }) {
     legend: { type: 'scroll', orient: 'horizontal', bottom: 0 },
     series: [
       {
-        name: '证书',
+        name: '资格证书',
         type: 'pie',
         radius: ['32%', '60%'],
         center: ['50%', '53%'],

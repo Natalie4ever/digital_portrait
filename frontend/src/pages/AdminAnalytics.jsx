@@ -115,7 +115,7 @@ export default function AdminAnalytics() {
             </Card>
           </Col>
           <Col xs={24} lg={12}>
-            <Card title="证书类型分布" size="small">
+            <Card title="资格证书类型分布" size="small">
               <CertificatePie items={certs.items} total={certs.total_certs} />
             </Card>
           </Col>
