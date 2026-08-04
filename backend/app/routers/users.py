@@ -6,6 +6,7 @@ import io
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, exists
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from openpyxl import load_workbook
 
@@ -85,9 +86,15 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_admin),
 ):
-    r = await db.execute(select(User).where(User.ehr_no == body.ehr_no.strip()))
-    if r.scalar_one_or_none():
+    # 检查同一 EHR 的活跃用户数量（应用层唯一性保护）
+    r = await db.execute(
+        select(func.count()).select_from(User)
+        .where(User.ehr_no == body.ehr_no.strip(), User.deleted_at.is_(None))
+    )
+    active_count = r.scalar_one_or_none()
+    if active_count and active_count > 0:
         raise HTTPException(status_code=400, detail="EHR号已存在")
+
     pwd = body.initial_password or settings.DEFAULT_PASSWORD
     user = User(
         ehr_no=body.ehr_no.strip(),
@@ -96,8 +103,13 @@ async def create_user(
         role=body.role if body.role in ("user", "leader", "admin") else "user",
         password_hash=hash_password(pwd),
     )
-    db.add(user)
-    await db.flush()
+    try:
+        db.add(user)
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="EHR号已存在")
+
     await log_operation(db, current_user.id, "create_user", "users", user.ehr_no, None)
     return UserResponse.model_validate(user)
 

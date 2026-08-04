@@ -27,7 +27,7 @@ def beijing_now():
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    ehr_no = Column(String(50), unique=True, nullable=False, index=True)
+    ehr_no = Column(String(50), unique=False, nullable=False, index=True)
     name = Column(String(100), nullable=False)
     group_name = Column(String(100), nullable=False)
     role = Column(String(20), nullable=False, default="user")
