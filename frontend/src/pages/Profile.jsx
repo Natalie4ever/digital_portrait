@@ -503,7 +503,7 @@ export default function Profile({ ehrOverride }) {
         readOnly={viewingOthers}
       />
       <TableSubSection
-        title="外部资格"
+        title="资格证书"
         segment="qualification"
         list={profile.qualification}
         formColumns={3}
@@ -606,7 +606,7 @@ export default function Profile({ ehrOverride }) {
               <Col span={8}><Form.Item name="home_phone" label="家庭电话"><Input /></Form.Item></Col>
               <Col span={12}><Form.Item name="home_address" label="家庭地址"><Input /></Form.Item></Col>
               <Col span={8}><Form.Item name="email" label="邮箱"><Input /></Form.Item></Col>
-              <Col span={4}><Form.Item name="commute_minutes" label="通勤时间(分钟)"><Input type="number" /></Form.Item></Col>
+              <Col span={4}><Form.Item name="commute_minutes" label="通勤时间(分钟)"><Input type="number" min={0} /></Form.Item></Col>
             </Row>
             {/* Step 1 1.1: 应急先锋队 - 在编辑模式也展示 */}
             <div style={{ marginBottom: 16, padding: '8px 16px', backgroundColor: '#fafafa', borderRadius: 4 }}>
