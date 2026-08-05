@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
-import { Card, Table, Alert } from 'antd';
+import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { Card, Table, Alert, Row, Col, Input, Select, DatePicker, Space, Button } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import { listOperationLogs } from '../api';
 import './AdminLogs.css';
 
@@ -13,11 +14,31 @@ const ACTION_COLORS = {
   '启用': { backgroundColor: '#ECFDF5', color: '#047857', borderColor: '#6EE7B7' },
 };
 
+const ACTION_OPTIONS = [
+  { value: '登录', label: '登录' },
+  { value: '登出', label: '登出' },
+  { value: '创建', label: '创建' },
+  { value: '更新', label: '更新' },
+  { value: '删除', label: '删除' },
+  { value: '禁用', label: '禁用' },
+  { value: '启用', label: '启用' },
+];
+
+const { RangePicker } = DatePicker;
+
 export default function AdminLogs() {
-  const [logs, setLogs] = useState([]);
+  const [data, setData] = useState({ total: 0, items: [] });
   const [page, setPage] = useState(1);
+  const [pageSize] = useState(50);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState({
+    user_name: undefined,
+    user_ehr: undefined,
+    action: undefined,
+    start_time: undefined,
+    end_time: undefined,
+  });
   const dragRef = useRef(null);
   const scrollerRef = useRef(null);
   const dragStateRef = useRef({
@@ -28,13 +49,27 @@ export default function AdminLogs() {
   });
   const [isDragging, setIsDragging] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     setLoading(true);
-    listOperationLogs({ page, page_size: 50 })
-      .then(setLogs)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [page]);
+    try {
+      const params = { page, page_size: pageSize, ...filters };
+      // 清除 undefined/null 空值
+      Object.keys(params).forEach((k) => {
+        if (params[k] === undefined || params[k] === null || params[k] === '') {
+          delete params[k];
+        }
+      });
+      const res = await listOperationLogs(params);
+      setData({ total: res.total || 0, items: res.items || [] });
+      setError('');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, filters]);
+
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     const root = dragRef.current;
@@ -44,7 +79,7 @@ export default function AdminLogs() {
       root.querySelector?.('.ant-table-body') ||
       root.querySelector?.('.ant-table-container') ||
       root;
-  }, [logs.length]);
+  }, [data.items.length]);
 
   const columns = useMemo(
     () => [
@@ -166,6 +201,72 @@ export default function AdminLogs() {
       </div>
 
       <Card className="admin-card">
+        {/* 筛选栏 */}
+        <div className="filter-section">
+          <Row gutter={[8, 10]} align="middle" justify="start" className="user-filter-search-row">
+            <Col xs={24} sm={12} md={6} lg={5}>
+              <Input
+                placeholder="操作人"
+                value={filters.user_name || ''}
+                onChange={(e) => setFilters({ ...filters, user_name: e.target.value || undefined })}
+                prefix={<SearchOutlined />}
+                allowClear
+                className="filter-input"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6} lg={4}>
+              <Input
+                placeholder="EHR 号"
+                value={filters.user_ehr || ''}
+                onChange={(e) => setFilters({ ...filters, user_ehr: e.target.value || undefined })}
+                prefix={<SearchOutlined />}
+                allowClear
+                className="filter-input"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6} lg={4}>
+              <Select
+                placeholder="操作类型"
+                value={filters.action || undefined}
+                onChange={(v) => setFilters({ ...filters, action: v || undefined })}
+                allowClear
+                className="filter-select"
+              >
+                {ACTION_OPTIONS.map((o) => (
+                  <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} md={6} lg={8}>
+              <RangePicker
+                value={[
+                  filters.start_time ? new Date(filters.start_time) : null,
+                  filters.end_time ? new Date(filters.end_time) : null,
+                ]}
+                onChange={(dates) => {
+                  setFilters({
+                    ...filters,
+                    start_time: dates?.[0] ? dates[0].toISOString() : undefined,
+                    end_time: dates?.[1] ? dates[1].toISOString() : undefined,
+                  });
+                }}
+                className="filter-range-picker"
+                placeholder={['开始时间', '结束时间']}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6} lg={3}>
+              <Button
+                onClick={load}
+                icon={<SearchOutlined />}
+                type="primary"
+                className="search-btn"
+              >
+                查询
+              </Button>
+            </Col>
+          </Row>
+        </div>
+
         {error && <Alert type="error" message={error} className="error-alert" />}
 
         <div
@@ -180,14 +281,15 @@ export default function AdminLogs() {
           <Table
             rowKey="id"
             columns={columns}
-            dataSource={logs}
+            dataSource={data.items}
             loading={loading}
             scroll={{ x: 'max-content' }}
             pagination={{
               current: page,
-              pageSize: 50,
-              total: logs.length < 50 ? page * 50 : page * 50 + 1,
-              showTotal: () => `第 ${page} 页`,
+              pageSize,
+              total: data.total,
+              showSizeChanger: false,
+              showTotal: (t) => `共 ${t} 条`,
               onChange: setPage,
               className: 'admin-pagination',
             }}

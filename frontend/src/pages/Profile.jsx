@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Card,
   Spin,
@@ -20,6 +20,7 @@ import {
   Timeline,
   Switch,
 } from 'antd';
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
   getProfileMe,
@@ -57,6 +58,167 @@ import {
 } from '../constants';
 import DevelopmentIntent from '../components/DevelopmentIntent';
 
+// ===================== 右侧悬浮导航 =====================
+const NAV_SECTIONS = [
+  { id: 'section-基础信息', label: '基础信息' },
+  { id: 'section-技能标签', label: '技能标签' },
+  { id: 'section-政治面貌', label: '政治面貌' },
+  { id: 'section-学历学位', label: '学历学位' },
+  { id: 'section-社会关系', label: '社会关系' },
+  { id: 'section-简历', label: '简历' },
+  { id: 'section-奖惩信息', label: '奖惩信息' },
+  { id: 'section-资格证书', label: '资格证书' },
+  { id: 'section-项目总结', label: '项目总结' },
+  { id: 'section-专业成果', label: '专业成果' },
+  { id: 'section-语言能力', label: '语言能力' },
+  { id: 'section-通讯信息', label: '通讯信息' },
+  { id: 'section-发展意向', label: '发展意向' },
+];
+
+function ProfileNav({ activeSection, navVisible, setNavVisible }) {
+  const navRef = useRef(null);
+  const toggleBtnRef = useRef(null);
+
+  // 点击导航区域外 → 折叠
+  useEffect(() => {
+    if (!navVisible) return;
+    const handleClickOutside = (e) => {
+      if (
+        navRef.current && !navRef.current.contains(e.target) &&
+        toggleBtnRef.current && !toggleBtnRef.current.contains(e.target)
+      ) {
+        setNavVisible(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [navVisible, setNavVisible]);
+
+  const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setNavVisible(false);
+  };
+
+  return (
+    <div style={styles.navWrapper}>
+      {/* 导航面板 */}
+      <div
+        ref={navRef}
+        style={{
+          ...styles.nav,
+          opacity: navVisible ? 1 : 0,
+          pointerEvents: navVisible ? 'auto' : 'none',
+          transform: navVisible ? 'translateX(0)' : 'translateX(10px)',
+        }}
+      >
+        <div style={styles.navTitle}>档案导航</div>
+        {NAV_SECTIONS.map((s) => (
+          <div
+            key={s.id}
+            style={{
+              ...styles.navItem,
+              ...(activeSection === s.id ? styles.navItemActive : {}),
+            }}
+            onClick={() => scrollTo(s.id)}
+            title={s.label}
+          >
+            <span style={{ ...styles.navDot, ...(activeSection === s.id ? styles.navDotActive : {}) }} />
+            <span style={styles.navLabel}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 折叠/展开按钮 */}
+      <div
+        ref={toggleBtnRef}
+        style={styles.toggleBtn}
+        onClick={() => setNavVisible((v) => !v)}
+        title="档案导航"
+      >
+        {navVisible ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  navWrapper: {
+    position: 'fixed',
+    right: 0,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    zIndex: 100,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0,
+  },
+  toggleBtn: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#e53e3e',
+    color: '#fff',
+    borderRadius: '8px 0 0 8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: '-2px 2px 8px rgba(229,62,62,0.35)',
+    fontSize: 16,
+    flexShrink: 0,
+    transition: 'background-color 0.2s',
+    zIndex: 101,
+  },
+  nav: {
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    backdropFilter: 'blur(8px)',
+    borderRadius: '8px 0 0 8px',
+    boxShadow: '-2px 2px 16px rgba(0,0,0,0.1)',
+    padding: '16px 0 16px 0',
+    minWidth: 148,
+    transition: 'opacity 0.25s, transform 0.25s',
+    transform: 'translateX(10px)',
+  },
+  navTitle: {
+    fontSize: 12,
+    color: '#999',
+    padding: '0 16px 10px',
+    borderBottom: '1px solid #f0f0f0',
+    marginBottom: 6,
+    letterSpacing: 1,
+  },
+  navItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '7px 16px',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    gap: 10,
+  },
+  navItemActive: {
+    color: '#e53e3e',
+    backgroundColor: 'rgba(229,62,62,0.06)',
+  },
+  navDot: {
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    border: '1.5px solid #ccc',
+    flexShrink: 0,
+    transition: 'all 0.15s',
+  },
+  navDotActive: {
+    backgroundColor: '#e53e3e',
+    borderColor: '#e53e3e',
+  },
+  navLabel: {
+    fontSize: 13,
+    color: '#444',
+    whiteSpace: 'nowrap',
+  },
+};
+
+// ===================== 工具函数 =====================
 function formatDate(d) {
   if (!d) return '';
   if (typeof d === 'string') return d.slice(0, 10);
@@ -106,6 +268,7 @@ const SEGMENT_TO_STATE_KEY = {
   project_summary: 'project_summaries',
 };
 
+// ===================== 主组件 =====================
 export default function Profile({ ehrOverride }) {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -123,6 +286,9 @@ export default function Profile({ ehrOverride }) {
   const [addingSub, setAddingSub] = useState(null);
   const [baseForm] = Form.useForm();
   const [contactForm] = Form.useForm();
+  const [activeSection, setActiveSection] = useState(NAV_SECTIONS[0].id);
+  const [navVisible, setNavVisible] = useState(false);
+  const observerRef = useRef(null);
 
   useEffect(() => {
     fetch('/region.json')
@@ -130,6 +296,30 @@ export default function Profile({ ehrOverride }) {
       .then((data) => (Array.isArray(data) && setRegionOptions(data)) || undefined)
       .catch(() => setRegionOptions([]));
   }, []);
+
+  // IntersectionObserver：滚动联动高亮
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        // 取屏幕上方以上的模块中最后一个（即视口最上方的那个）
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .map((e) => e.target.id);
+        if (visible.length > 0) {
+          // 取 NAV_SECTIONS 中第一个在 visible 里的
+          const first = NAV_SECTIONS.find((s) => visible.includes(s.id));
+          if (first) setActiveSection(first.id);
+        }
+      },
+      { rootMargin: '-10% 0px -80% 0px', threshold: 0 }
+    );
+    NAV_SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observerRef.current.observe(el);
+    });
+    return () => observerRef.current?.disconnect();
+  }, [profile]); // profile 加载后开始监听
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -220,8 +410,6 @@ export default function Profile({ ehrOverride }) {
       const res = id
         ? await updateSub(segment, id, body)
         : await createSub(segment, body);
-      // 修复 PRO-016：segment 与后端响应体字段名不一致时（如 project_summary → project_summaries），
-      // 需要做映射，否则新记录塞进不存在的键，列表看不到。
       const stateKey = SEGMENT_TO_STATE_KEY[segment] || segment;
       setProfile((prev) => {
         const next = { ...prev };
@@ -289,10 +477,13 @@ export default function Profile({ ehrOverride }) {
 
   return (
     <div>
+      {/* 右侧悬浮导航 */}
+      <ProfileNav activeSection={activeSection} navVisible={navVisible} setNavVisible={setNavVisible} />
+
       <h2 style={{ marginBottom: 8 }}>{titleName}</h2>
       <p style={{ color: '#666', marginBottom: 24 }}>{subtitle}</p>
 
-      <Card title="基础信息" style={{ marginBottom: 16 }}>
+      <Card id="section-基础信息" title="基础信息" style={{ marginBottom: 16 }}>
         {!baseEdit && !viewingOthers ? (
           <>
             <Descriptions
@@ -401,15 +592,15 @@ export default function Profile({ ehrOverride }) {
         )}
       </Card>
 
-      <Card title="技能标签" style={{ marginBottom: 16 }}>
+      <Card id="section-技能标签" title="技能标签" style={{ marginBottom: 16 }}>
         {viewingOthers ? (
           (profile.skill_tags && profile.skill_tags.length > 0)
             ? profile.skill_tags.map((t, index) => {
                 const palette = [
-                  { backgroundColor: '#e6f7ff', color: '#0050b3', borderColor: '#91d5ff' }, // 浅蓝
-                  { backgroundColor: '#f6ffed', color: '#237804', borderColor: '#b7eb8f' }, // 浅绿
-                  { backgroundColor: '#fff7e6', color: '#ad4e00', borderColor: '#ffd591' }, // 浅橙
-                  { backgroundColor: '#fff0f6', color: '#c41d7f', borderColor: '#ffadd2' }, // 浅粉
+                  { backgroundColor: '#e6f7ff', color: '#0050b3', borderColor: '#91d5ff' },
+                  { backgroundColor: '#f6ffed', color: '#237804', borderColor: '#b7eb8f' },
+                  { backgroundColor: '#fff7e6', color: '#ad4e00', borderColor: '#ffd591' },
+                  { backgroundColor: '#fff0f6', color: '#c41d7f', borderColor: '#ffadd2' },
                 ];
                 const style = palette[index % palette.length];
                 return (
@@ -460,6 +651,7 @@ export default function Profile({ ehrOverride }) {
       />
       <TableSubSection
         title="配偶、子女及主要社会关系"
+        id="section-社会关系"
         segment="family"
         list={profile.family}
         tableFields={['relation', 'name', 'birth_date', 'work_unit_and_title']}
@@ -475,6 +667,7 @@ export default function Profile({ ehrOverride }) {
       />
       <TableSubSection
         title="简历"
+        id="section-简历"
         segment="resume"
         list={profile.resume}
         formColumns={3}
@@ -489,6 +682,7 @@ export default function Profile({ ehrOverride }) {
       />
       <TableSubSection
         title="奖惩信息"
+        id="section-奖惩信息"
         segment="reward"
         list={profile.reward}
         tableFields={['reward_time', 'reward_name']}
@@ -504,6 +698,7 @@ export default function Profile({ ehrOverride }) {
       />
       <TableSubSection
         title="资格证书"
+        id="section-资格证书"
         segment="qualification"
         list={profile.qualification}
         formColumns={3}
@@ -530,6 +725,7 @@ export default function Profile({ ehrOverride }) {
       />
       <TableSubSection
         title="专业成果"
+        id="section-专业成果"
         segment="achievement"
         list={profile.achievement}
         formColumns={3}
@@ -544,6 +740,7 @@ export default function Profile({ ehrOverride }) {
       />
       <TableSubSection
         title="语言能力"
+        id="section-语言能力"
         segment="language"
         list={profile.language}
         tableFields={['language', 'proficiency']}
@@ -558,7 +755,7 @@ export default function Profile({ ehrOverride }) {
         readOnly={viewingOthers}
       />
 
-      <Card title="通讯信息" style={{ marginBottom: 16 }}>
+      <Card id="section-通讯信息" title="通讯信息" style={{ marginBottom: 16 }}>
         {!contactEdit && !viewingOthers ? (
           <>
             <Descriptions
@@ -655,12 +852,15 @@ export default function Profile({ ehrOverride }) {
         )}
       </Card>
 
-      {/* Step 1 1.3（修订版）：发展意向 1:1 - 4 个部分折叠面板 - 位置：档案页最下方 */}
-      <DevelopmentIntent readOnly={viewingOthers} />
+      {/* Step 1 1.3（修订版）：发展意向 - 外层 div 加 id 以便被导航锚定 */}
+      <div id="section-发展意向">
+        <DevelopmentIntent readOnly={viewingOthers} />
+      </div>
     </div>
   );
 }
 
+// ===================== PoliticalSection =====================
 function PoliticalSection({ list, editing, setEditing, adding, setAdding, saveSub, doDeleteSub, readOnly }) {
   const segment = 'political';
   const isAdding = adding === segment;
@@ -700,7 +900,7 @@ function PoliticalSection({ list, editing, setEditing, adding, setAdding, saveSu
   ];
 
   return (
-    <Card title="政治面貌" style={{ marginBottom: 16 }}>
+    <Card id="section-政治面貌" title="政治面貌" style={{ marginBottom: 16 }}>
       <Table
         dataSource={list || []}
         columns={columns}
@@ -733,10 +933,13 @@ function PoliticalSection({ list, editing, setEditing, adding, setAdding, saveSu
   );
 }
 
+// ===================== TableSubSection =====================
 // 通用表格子表：与政治面貌一致的 UI（Table + 等分列 + 操作列 + 整行新增按钮 + Modal 新增/编辑）
 // tableFields：可选，表格中展示的字段 key 数组（顺序生效）；不传则展示全部 fields
 // formColumns：可选，弹窗表单列数（如 3 则三列排布），不传则单列竖向
-function TableSubSection({ title, segment, list, fields, tableFields, formColumns, editing, setEditing, adding, setAdding, saveSub, doDeleteSub, readOnly }) {
+// id：可选，自定义 section 的 DOM id（默认用 segment 生成的 id）
+function TableSubSection({ title, segment, list, fields, tableFields, formColumns, editing, setEditing, adding, setAdding, saveSub, doDeleteSub, readOnly, id }) {
+  const sectionId = id || `section-${title}`;
   const isAdding = adding === segment;
   const edit = editing.segment === segment ? editing : null;
   const [form] = Form.useForm();
@@ -788,7 +991,7 @@ function TableSubSection({ title, segment, list, fields, tableFields, formColumn
   ];
 
   return (
-    <Card title={title} style={{ marginBottom: 16 }}>
+    <Card id={sectionId} title={title} style={{ marginBottom: 16 }}>
       <Table
         dataSource={list || []}
         columns={columns}
@@ -846,6 +1049,7 @@ function TableSubSection({ title, segment, list, fields, tableFields, formColumn
   );
 }
 
+// ===================== ProjectSummarySection =====================
 // Step 1 1.4: 项目总结（含技能标签多对多）
 function ProjectSummarySection({ list, templates, editing, setEditing, adding, setAdding, saveSub, doDeleteSub, readOnly }) {
   const segment = 'project_summary';
@@ -906,7 +1110,7 @@ function ProjectSummarySection({ list, templates, editing, setEditing, adding, s
   ];
 
   return (
-    <Card title="项目总结" style={{ marginBottom: 16 }}>
+    <Card id="section-项目总结" title="项目总结" style={{ marginBottom: 16 }}>
       <Table
         dataSource={list || []}
         columns={columns}
@@ -967,6 +1171,7 @@ function ProjectSummarySection({ list, templates, editing, setEditing, adding, s
   );
 }
 
+// ===================== SkillTagBlock =====================
 function SkillTagBlock({ tags, templates, onAdd, onRemove }) {
   const [custom, setCustom] = useState('');
   const [selTemplate, setSelTemplate] = useState('');
@@ -986,10 +1191,10 @@ function SkillTagBlock({ tags, templates, onAdd, onRemove }) {
   };
 
   const palette = [
-    { backgroundColor: '#e6f7ff', color: '#0050b3', borderColor: '#91d5ff' }, // 浅蓝
-    { backgroundColor: '#f6ffed', color: '#237804', borderColor: '#b7eb8f' }, // 浅绿
-    { backgroundColor: '#fff7e6', color: '#ad4e00', borderColor: '#ffd591' }, // 浅橙
-    { backgroundColor: '#fff0f6', color: '#c41d7f', borderColor: '#ffadd2' }, // 浅粉
+    { backgroundColor: '#e6f7ff', color: '#0050b3', borderColor: '#91d5ff' },
+    { backgroundColor: '#f6ffed', color: '#237804', borderColor: '#b7eb8f' },
+    { backgroundColor: '#fff7e6', color: '#ad4e00', borderColor: '#ffd591' },
+    { backgroundColor: '#fff0f6', color: '#c41d7f', borderColor: '#ffadd2' },
   ];
 
   return (

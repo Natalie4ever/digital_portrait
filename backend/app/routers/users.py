@@ -27,6 +27,22 @@ from app.validators import validate_ehr_no
 router = APIRouter(prefix="/api/admin/users", tags=["用户管理"])
 
 
+@router.get("/groups")
+async def list_group_names(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """返回所有不重复的组别名称（去重、排序），供前端下拉筛选使用"""
+    r = await db.execute(
+        select(User.group_name, func.count())
+        .where(User.deleted_at.is_(None), User.group_name.isnot(None))
+        .group_by(User.group_name)
+        .order_by(User.group_name)
+    )
+    groups = [row[0] for row in r.fetchall()]
+    return {"groups": groups}
+
+
 @router.get("", response_model=UserListResponse)
 async def list_users(
     page: int = 1,
@@ -48,7 +64,7 @@ async def list_users(
     if name:
         q = q.where(User.name.contains(name))
     if group_name:
-        q = q.where(User.group_name == group_name)
+        q = q.where(User.group_name.contains(group_name))
     if role:
         q = q.where(User.role == role)
     if is_emergency_staff is not None:
@@ -63,7 +79,7 @@ async def list_users(
     if name:
         count_q = count_q.where(User.name.contains(name))
     if group_name:
-        count_q = count_q.where(User.group_name == group_name)
+        count_q = count_q.where(User.group_name.contains(group_name))
     if role:
         count_q = count_q.where(User.role == role)
     if is_emergency_staff is not None:

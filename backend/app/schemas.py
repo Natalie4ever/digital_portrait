@@ -768,3 +768,8 @@ class EmergencyStatsResponse(BaseModel):
     total_emergency: int = 0
     total_employees: int = 0
     coverage_rate: float = 0.0
+
+
+class OperationLogListResponse(BaseModel):
+    total: int
+    items: list[OperationLogResponse]

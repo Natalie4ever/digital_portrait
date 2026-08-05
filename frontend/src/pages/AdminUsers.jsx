@@ -32,6 +32,7 @@ import {
   resetPassword,
   batchImportUsers,
   toggleEmergencyUser,
+  listUserGroups,
 } from '../api';
 import { ROLE_OPTIONS } from '../constants';
 import GroupTransferModal from '../components/GroupTransferModal';
@@ -54,12 +55,13 @@ export default function AdminUsers() {
   const [data, setData] = useState({ total: 0, items: [] });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
-  const [filters, setFilters] = useState({ include_disabled: false });  // 修复 USR-004：默认不勾选（不显示已禁用用户），让复选框有实际切换效果
+  const [filters, setFilters] = useState({ include_disabled: false, group_name: undefined });  // 修复 USR-004：默认不勾选（不显示已禁用用户），让复选框有实际切换效果；新增组别筛选
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
+  const [groupOptions, setGroupOptions] = useState([]);  // 组别下拉选项
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,6 +77,11 @@ export default function AdminUsers() {
   }, [page, pageSize, filters]);
 
   useEffect(() => { load(); }, [load]);
+
+  // 加载组别下拉选项
+  useEffect(() => {
+    listUserGroups().then((res) => setGroupOptions(res.groups || [])).catch(() => {});
+  }, []);
 
   const handleCreate = async (body) => {
     await createUser(body);
@@ -271,7 +278,7 @@ export default function AdminUsers() {
           <Row gutter={[8, 10]} align="middle" justify="start" className="user-filter-search-row">
             <Col xs={24} lg flex="auto">
               <Row gutter={[8, 10]} align="middle" className="user-filters-left">
-                <Col xs={24} sm={12} md={6} lg={4} className="filter-checkbox-col">
+                <Col xs={24} sm={12} md={6} lg={3} className="filter-checkbox-col">
                   <Checkbox
                     checked={filters.include_disabled}
                     onChange={(e) => setFilters({ ...filters, include_disabled: e.target.checked })}
@@ -280,7 +287,7 @@ export default function AdminUsers() {
                     含已禁用
                   </Checkbox>
                 </Col>
-                <Col xs={24} sm={12} md={6} lg={5}>
+                <Col xs={24} sm={12} md={6} lg={4}>
                   <Input
                     placeholder="EHR 号"
                     value={filters.ehr_no || ''}
@@ -290,7 +297,7 @@ export default function AdminUsers() {
                     className="filter-input"
                   />
                 </Col>
-                <Col xs={24} sm={12} md={6} lg={5}>
+                <Col xs={24} sm={12} md={6} lg={4}>
                   <Input
                     placeholder="姓名"
                     value={filters.name || ''}
@@ -300,7 +307,24 @@ export default function AdminUsers() {
                     className="filter-input"
                   />
                 </Col>
-                <Col xs={24} sm={12} md={6} lg={6}>
+                <Col xs={24} sm={12} md={6} lg={4}>
+                  <Select
+                    showSearch
+                    placeholder="组别"
+                    value={filters.group_name || undefined}
+                    onChange={(v) => setFilters({ ...filters, group_name: v || undefined })}
+                    allowClear
+                    className="filter-select"
+                    filterOption={(input, option) =>
+                      (option.children || '').toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {groupOptions.map((g) => (
+                      <Select.Option key={g} value={g}>{g}</Select.Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col xs={24} sm={12} md={6} lg={5}>
                   <Select
                     placeholder="角色"
                     value={filters.role || undefined}

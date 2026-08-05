@@ -282,6 +282,10 @@ export async function listGroups() {
   return api.get('/admin/group-transfers/groups');
 }
 
+export async function listUserGroups() {
+  return api.get('/admin/users/groups');
+}
+
 // Step 3: 智能筛选场景
 export async function scenarioSearch(body) {
   return api.post('/admin/scenarios/search', body);
